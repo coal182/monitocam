@@ -1,0 +1,20 @@
+app:
+  host: "0.0.0.0"
+  port: 8585
+  debug: false
+
+storage:
+  base_path: "/home/cristian_martin/monitocam_recordings"
+  nas_path: "/mnt/nas"
+  use_nas: false
+
+recording:
+  fragment_duration: 1800  # 30 minutes
+  gif_duration: 5  # seconds
+  gif_fps: 5
+  gif_speed: 4  # playback speed multiplier (4x = covers 20s of video in 5s GIF)
+
+jwt:
+  secret_key: "change-this-in-production"
+  algorithm: "HS256"
+  expire_minutes: 1440  # 24 hours
