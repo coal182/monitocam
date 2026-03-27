@@ -70,6 +70,24 @@ class RecorderService:
                 str(output_file),
             ]
 
+            cmd = [
+                "ffmpeg",
+                "-rtsp_transport", 
+                "udp",
+                "-i", 
+                rtsp_url,
+                "-c:v", 
+                "copy",
+                "-an",
+                "-f", 
+                "mp4",
+                "-movflags", 
+                "+frag_keyframe+empty_moov+default_base_moof",
+                "-t", 
+                str(segment_duration),
+                str(output_file),
+            ]
+
             process = subprocess.Popen(
                 cmd,
                 stdout=subprocess.DEVNULL,
@@ -87,8 +105,8 @@ class RecorderService:
                             f"Segment complete ({output_file.stat().st_size} bytes), re-muxing to MP4"
                         )
                         try:
-                            self._remux_to_mp4(str(output_file))
-                            logger.info(f"Re-mux complete, generating GIF")
+            #                self._remux_to_mp4(str(output_file))
+            #                logger.info(f"Re-mux complete, generating GIF")
                             self._gif_service.generate_gif(
                                 str(output_file),
                                 str(gif_file),
