@@ -15,13 +15,9 @@ class AppConfig(BaseModel):
 
 class StorageConfig(BaseModel):
     base_path: str = "/var/lib/monitocam/recordings"
-    nas_path: str = "/mnt/nas"
-    use_nas: bool = False
 
     @property
     def recordings_path(self) -> str:
-        if self.use_nas and os.path.exists(self.nas_path):
-            return self.nas_path
         return self.base_path
 
 

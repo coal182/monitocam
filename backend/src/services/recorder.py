@@ -53,25 +53,6 @@ class RecorderService:
 
             cmd = [
                 "ffmpeg",
-                "-re",
-                "-rtsp_transport",
-                "udp",
-                "-i",
-                rtsp_url,
-                "-c:v",
-                "copy",
-                "-an",
-                "-f",
-                "mpegts",
-                "-flush_packets",
-                "1",
-                "-t",
-                str(segment_duration),
-                str(output_file),
-            ]
-
-            cmd = [
-                "ffmpeg",
                 "-rtsp_transport", 
                 "udp",
                 "-i", 
@@ -105,8 +86,6 @@ class RecorderService:
                             f"Segment complete ({output_file.stat().st_size} bytes), re-muxing to MP4"
                         )
                         try:
-            #                self._remux_to_mp4(str(output_file))
-            #                logger.info(f"Re-mux complete, generating GIF")
                             self._gif_service.generate_gif(
                                 str(output_file),
                                 str(gif_file),
@@ -134,32 +113,6 @@ class RecorderService:
             finally:
                 if camera_id in self._processes:
                     del self._processes[camera_id]
-
-    def _remux_to_mp4(self, ts_path: str):
-        ts_file = Path(ts_path)
-        mp4_temp = ts_file.with_suffix(".mp4.tmp")
-        cmd = [
-            "ffmpeg",
-            "-i",
-            str(ts_file),
-            "-c",
-            "copy",
-            "-f",
-            "mp4",
-            "-movflags",
-            "+faststart",
-            str(mp4_temp),
-        ]
-        result = subprocess.run(cmd, capture_output=True, text=True, timeout=60)
-        if result.returncode == 0 and mp4_temp.exists():
-            ts_file.unlink()
-            mp4_temp.rename(ts_file)
-            logger.info(f"Re-muxed {ts_file.name} to MP4")
-        else:
-            logger.error(f"Re-mux failed: {result.stderr}")
-            if mp4_temp.exists():
-                mp4_temp.unlink()
-            raise RuntimeError("Re-mux failed")
 
     def stop_recording(self, camera_id: int) -> bool:
         if camera_id not in self._processes:

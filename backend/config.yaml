@@ -5,14 +5,12 @@ app:
 
 storage:
   base_path: "/mnt/nas-pictures/monitocam"
-  nas_path: "/mnt/nas-pictures/monitocam"
-  use_nas: true
 
 recording:
   fragment_duration: 1800  # 30 minutes
   gif_duration: 900  # seconds
-  gif_fps: 2
-  gif_speed: 15  # playback speed multiplier (4x = covers 20s of video in 5s GIF)
+  gif_fps: 12
+  gif_speed: 30  # playback speed multiplier (4x = covers 20s of video in 5s GIF)
 
 jwt:
   secret_key: "change-this-in-production"
