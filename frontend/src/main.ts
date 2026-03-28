@@ -1,16 +1,15 @@
-import { createApp } from 'vue'
-import { createPinia } from 'pinia'
-import App from './App.vue'
-import router from './router'
-import { useAuthStore } from './stores/auth'
-import './style.css'
+import { bootstrapApplication } from '@angular/platform-browser';
+import { AppComponent } from './app/app.component';
+import { provideRouter } from '@angular/router';
+import { provideHttpClient, withInterceptorsFromDi, withInterceptors } from '@angular/common/http';
+import { routes } from './app/app.routes';
+import { authInterceptor } from './app/core/auth.interceptor';
+import { AuthService } from './app/core/auth.service';
 
-const app = createApp(App)
-
-app.use(createPinia())
-app.use(router)
-
-const authStore = useAuthStore()
-authStore.checkAuth()
-
-app.mount('#app')
+bootstrapApplication(AppComponent, {
+  providers: [
+    provideRouter(routes),
+    provideHttpClient(withInterceptorsFromDi(), withInterceptors([authInterceptor])),
+    AuthService
+  ]
+}).catch(err => console.error(err));

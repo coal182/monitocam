@@ -1,0 +1,71 @@
+<div class="cameras-page">
+  <div class="header">
+    <h1>Camaras</h1>
+    <button (click)="showAddForm.set(true)">+ Anadir Camara</button>
+  </div>
+
+  @if (error()) {
+    <div class="error">{{ error() }}</div>
+  }
+
+  @if (showAddForm()) {
+    <div class="modal">
+      <div class="modal-content">
+        <h2>Nueva Camara</h2>
+        <form (ngSubmit)="addCamera()">
+          <div class="form-group">
+            <label>Nombre</label>
+            <input [(ngModel)]="newCamera.name" name="name" required />
+          </div>
+          <div class="form-group">
+            <label>URL RTSP</label>
+            <input [(ngModel)]="newCamera.rtsp_url" name="rtsp_url" required placeholder="rtsp://..." />
+          </div>
+          <div class="form-group checkbox">
+            <label>
+              <input type="checkbox" [(ngModel)]="newCamera.enabled" name="enabled" />
+              Habilitada
+            </label>
+          </div>
+          <div class="modal-actions">
+            <button type="button" (click)="showAddForm.set(false)">Cancelar</button>
+            <button type="submit">Guardar</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  }
+
+  @if (loading()) {
+    <div class="loading">Cargando...</div>
+  }
+
+  @if (!loading()) {
+    <div class="cameras-grid">
+      @for (camera of cameras(); track camera.id) {
+        <div class="camera-card">
+          <div class="camera-header">
+            <h3>{{ camera.name }}</h3>
+            <span [class]="'status ' + camera.status">{{ camera.status }}</span>
+          </div>
+          <div class="camera-info">
+            <p><strong>URL:</strong> {{ camera.rtsp_url }}</p>
+            <p><strong>ID:</strong> {{ camera.id }}</p>
+          </div>
+          <div class="camera-actions">
+            <button (click)="toggleRecording(camera)">
+              {{ camera.status === 'recording' ? 'Parar' : 'Grabar' }}
+            </button>
+            <button (click)="deleteCamera(camera.id)" class="danger">Eliminar</button>
+          </div>
+        </div>
+      }
+    </div>
+  }
+
+  @if (!loading() && cameras().length === 0) {
+    <div class="empty">
+      No hay camaras configuradas
+    </div>
+  }
+</div>

@@ -1,0 +1,80 @@
+<div class="recordings-page">
+  <div class="header">
+    <h1>Grabaciones</h1>
+    <div class="header-actions">
+      <button (click)="cleanupOldRecordings()" class="btn-cleanup">Limpiar</button>
+      <button (click)="loadGifs()" class="btn-refresh">Actualizar</button>
+      <button (click)="toggleAutoRefresh()" [class.btn-auto]="true" [class.active]="autoRefresh()">
+        {{ autoRefresh() ? 'Auto ON' : 'Auto OFF' }}
+      </button>
+    </div>
+  </div>
+
+  <div class="filters">
+    <div class="filter-group">
+      <label>Camara</label>
+      <select [(ngModel)]="selectedCamera" (change)="loadGifs()">
+        <option [ngValue]="null">Todas</option>
+        @for (cam of cameras(); track cam.id) {
+          <option [ngValue]="cam.id">{{ cam.name }}</option>
+        }
+      </select>
+    </div>
+    <div class="filter-group">
+      <span class="count">{{ gifs().length }} grabaciones</span>
+    </div>
+  </div>
+
+  @if (loading() && gifs().length === 0) {
+    <div class="loading">Cargando...</div>
+  }
+
+  @if (selectedGif()) {
+    <div class="modal" (click)="closeVideo()">
+      <div class="modal-content video-modal" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <div class="modal-info">
+            <h2>{{ selectedGif()!.camera_name }}</h2>
+            <span class="timestamp">{{ formatTimestamp(selectedGif()!.timestamp) }}</span>
+          </div>
+          <button (click)="closeVideo()" class="close-btn">X</button>
+        </div>
+        <video [src]="getDownloadUrl(selectedGif()!.id)" controls autoplay>
+          Tu navegador no soporta video.
+        </video>
+        <div class="modal-footer">
+          <a [href]="getDownloadUrl(selectedGif()!.id)" class="btn-download" download>
+            Descargar MP4
+          </a>
+        </div>
+      </div>
+    </div>
+  }
+
+  @if (!loading() && gifs().length === 0) {
+    <div class="empty">No hay grabaciones</div>
+  }
+
+  @if (gifs().length > 0) {
+    <div class="gifs-grid">
+      @for (gif of gifs(); track gif.id) {
+        <div class="gif-card" (click)="openVideo(gif)">
+          <div class="gif-preview">
+            <img [src]="getGifUrl(gif.id)" [alt]="gif.filename" loading="lazy" />
+            <div class="gif-overlay">
+              <span class="play-icon">▶</span>
+            </div>
+          </div>
+          <div class="gif-info">
+            <h3>{{ gif.camera_name }}</h3>
+            <p class="timestamp">{{ formatTimestamp(gif.timestamp) }}</p>
+            <div class="gif-footer">
+              <p class="size">{{ formatSize(gif.size) }}</p>
+              <button class="btn-delete" (click)="deleteGif(gif, $event)" title="Eliminar">X</button>
+            </div>
+          </div>
+        </div>
+      }
+    </div>
+  }
+</div>

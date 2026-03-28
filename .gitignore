@@ -33,6 +33,10 @@ Thumbs.db
 # Cache
 .ruff_cache/
 .pytest_cache/
+coverage/
 
-# Frontend build
+# Angular
+frontend/.angular/
 frontend/dist/
+frontend/tmp/
+*.tsbuildinfo

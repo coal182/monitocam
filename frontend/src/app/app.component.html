@@ -1,0 +1,18 @@
+<div class="app">
+  @if (authService.isAuthenticated()) {
+    <nav class="navbar">
+      <div class="nav-brand">MonitoCam</div>
+      <div class="nav-links">
+        <a routerLink="/">Camaras</a>
+        <a routerLink="/recordings">Grabaciones</a>
+      </div>
+      <div class="nav-user">
+        <span>{{ authService.username() }}</span>
+        <button (click)="logout()">Logout</button>
+      </div>
+    </nav>
+  }
+  <main class="main-content">
+    <router-outlet></router-outlet>
+  </main>
+</div>

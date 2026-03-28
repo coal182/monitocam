@@ -4,7 +4,7 @@ app:
   debug: false
 
 storage:
-  base_path: "/mnt/nas-pictures/monitocam"
+  base_path: "/recordings"
 
 recording:
   fragment_duration: 1800  # 30 minutes

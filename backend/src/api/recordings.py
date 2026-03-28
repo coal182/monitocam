@@ -1,7 +1,8 @@
 import os
+from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Optional, List
-from fastapi import APIRouter, Depends, HTTPException, status, Query
+from fastapi import APIRouter, Depends, HTTPException, status, Query, Path as PathParam
 from fastapi.responses import FileResponse
 
 from models.recording import RecordingResponse, RecordingList
@@ -214,25 +215,41 @@ async def delete_recording(
         gif_file.unlink()
 
 
-@router.get("/{recording_id}/download")
-async def download_recording(
-    recording_id: str,
+@router.delete("/cleanup/{days}", status_code=status.HTTP_204_NO_CONTENT)
+async def cleanup_old_recordings(
+    days: int = PathParam(..., ge=1, description="Delete recordings older than N days"),
     current_user: dict = Depends(get_current_user),
     db=Depends(get_db),
 ):
-    recordings = get_recordings_from_files()
-    recording = next((r for r in recordings if r["id"] == recording_id), None)
+    cutoff_date = datetime.now() - timedelta(days=days)
+    base_path = Path(settings.storage.recordings_path)
 
-    if not recording:
-        raise HTTPException(status_code=404, detail="Recording not found")
+    if not base_path.exists():
+        return
 
-    video_path = Path(recording["path"])
-    if not video_path.exists():
-        raise HTTPException(status_code=404, detail="File not found")
+    deleted_count = 0
+    for camera_dir in base_path.iterdir():
+        if not camera_dir.is_dir():
+            continue
 
-    return FileResponse(
-        path=str(video_path), filename=recording["filename"], media_type="video/mp4"
-    )
+        for video_file in camera_dir.glob("*.mp4"):
+            if video_file.name.endswith(".tmp"):
+                continue
+
+            file_mtime = datetime.fromtimestamp(video_file.stat().st_mtime)
+
+            if file_mtime < cutoff_date:
+                video_path = Path(video_file)
+                if video_path.exists():
+                    video_path.unlink()
+                    deleted_count += 1
+
+                gif_path = gif_service.get_gif_path(str(video_file))
+                gif_file = Path(gif_path)
+                if gif_file.exists():
+                    gif_file.unlink()
+
+    print(f"Deleted {deleted_count} recordings older than {days} days")
 
 
 @router.get("/{recording_id}/gif")
