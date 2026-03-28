@@ -6,7 +6,7 @@ services:
     ports:
       - "8585:8585"
     volumes:
-      - /home/cristian_martin/monitocam_recordings:/recordings
+      - /mnt/nas-pictures/monitocam:/recordings
     environment:
       - PYTHONUNBUFFERED=1
     restart: unless-stopped
@@ -16,7 +16,7 @@ services:
       context: .
       dockerfile: Dockerfile.frontend
     ports:
-      - "80:80"
+      - "3000:80"
     depends_on:
       - backend
     restart: unless-stopped
