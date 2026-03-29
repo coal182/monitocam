@@ -1,9 +1,9 @@
 <div class="recordings-page">
   <div class="header">
-    <h1>Grabaciones</h1>
+    <h1>Recordings</h1>
     <div class="header-actions">
-      <button (click)="cleanupOldRecordings()" class="btn-cleanup">Limpiar</button>
-      <button (click)="loadGifs()" class="btn-refresh">Actualizar</button>
+      <button (click)="cleanupOldRecordings()" class="btn-cleanup">Clean up</button>
+      <button (click)="loadGifs()" class="btn-refresh">Refresh</button>
       <button (click)="toggleAutoRefresh()" [class.btn-auto]="true" [class.active]="autoRefresh()">
         {{ autoRefresh() ? 'Auto ON' : 'Auto OFF' }}
       </button>
@@ -12,21 +12,21 @@
 
   <div class="filters">
     <div class="filter-group">
-      <label>Camara</label>
+      <label>Camera</label>
       <select [(ngModel)]="selectedCamera" (change)="loadGifs()">
-        <option [ngValue]="null">Todas</option>
+        <option [ngValue]="null">All</option>
         @for (cam of cameras(); track cam.id) {
           <option [ngValue]="cam.id">{{ cam.name }}</option>
         }
       </select>
     </div>
     <div class="filter-group">
-      <span class="count">{{ gifs().length }} grabaciones</span>
+      <span class="count">{{ gifs().length }} recordings</span>
     </div>
   </div>
 
   @if (loading() && gifs().length === 0) {
-    <div class="loading">Cargando...</div>
+    <div class="loading">Loading...</div>
   }
 
   @if (selectedGif()) {
@@ -44,7 +44,7 @@
         </video>
         <div class="modal-footer">
           <a [href]="getDownloadUrl(selectedGif()!.id)" class="btn-download" download>
-            Descargar MP4
+            Download
           </a>
         </div>
       </div>
@@ -52,7 +52,7 @@
   }
 
   @if (!loading() && gifs().length === 0) {
-    <div class="empty">No hay grabaciones</div>
+    <div class="empty">No recordings found</div>
   }
 
   @if (gifs().length > 0) {
