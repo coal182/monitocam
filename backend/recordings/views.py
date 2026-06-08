@@ -65,6 +65,27 @@ class RecordingViewSet(viewsets.ModelViewSet):
         serializer = RecordingSerializer(qs, many=True)
         return Response(serializer.data)
 
+    @action(detail=False, methods=["get"], url_path="gifs/(?P<pk>[0-9]+)/file")
+    def gif_file(self, request, pk=None):
+        try:
+            recording = Recording.objects.get(id=pk)
+        except Recording.DoesNotExist:
+            raise Http404("Recording not found")
+
+        gif_path = Path(recording.path).with_suffix(".gif")
+
+        if not gif_path.exists():
+            from recordings.tasks import generate_gif_task
+            generate_gif_task.delay(recording.id)
+            return Response({"status": "generating", "message": "GIF generation started"})
+
+        return FileResponse(
+            open(gif_path, "rb"),
+            content_type="image/gif",
+            as_attachment=False,
+            filename=gif_path.name,
+        )
+
     @action(detail=False, methods=["delete"], url_path="cleanup/(?P<days>[0-9]+)")
     def cleanup(self, request, days=None):
         days = int(days)

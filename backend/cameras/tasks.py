@@ -6,10 +6,14 @@ from django.utils import timezone
 logger = logging.getLogger(__name__)
 
 
-@shared_task(queue="recordings")
+@shared_task(queue="recordings", time_limit=7200, soft_time_limit=7000)
 def start_recording_task(camera_id: int):
+    import os
+    import signal
+
     from cameras.models import Camera
     from cameras.services.recorder import recorder_service
+    from cameras.services.recording_status import set_recording
 
     try:
         camera = Camera.objects.get(id=camera_id)
@@ -17,28 +21,73 @@ def start_recording_task(camera_id: int):
         logger.error(f"Camera {camera_id} not found")
         return False
 
+    if not camera.enabled:
+        logger.info(f"Camera {camera_id} disabled, skipping recording")
+        return False
+
     success = recorder_service.start_recording(camera.id, camera.name, camera.rtsp_url)
 
-    if success:
-        from recordings.models import Recording
-        from django.conf import settings
-        from pathlib import Path
+    if not success:
+        return False
 
-        output_dir = Path(settings.RECORDINGS_PATH) / f"camera_{camera_id}"
-        safe_name = "".join(c for c in camera.name if c.isalnum() or c in "_-")
-        timestamp = timezone.now().strftime("%Y-%m-%d_%H-%M")
-        filename = f"{safe_name}_{timestamp}.mp4"
-        output_file = output_dir / filename
+    from recordings.models import Recording
+    from django.conf import settings
+    from pathlib import Path
 
-        Recording.objects.create(
-            camera=camera,
-            filename=filename,
-            path=str(output_file),
-            start_time=timezone.now(),
-        )
-        logger.info(f"Created Recording record for camera {camera_id}: {filename}")
+    output_dir = Path(settings.RECORDINGS_PATH) / f"camera_{camera_id}"
+    safe_name = "".join(c for c in camera.name if c.isalnum() or c in "_-")
+    timestamp = timezone.now().strftime("%Y-%m-%d_%H-%M")
+    filename = f"{safe_name}_{timestamp}.mp4"
+    output_file = output_dir / filename
 
-    return success
+    recording = Recording.objects.create(
+        camera=camera,
+        filename=filename,
+        path=str(output_file),
+        start_time=timezone.now(),
+    )
+    logger.info(f"Created Recording record for camera {camera_id}: {filename}")
+
+    process = recorder_service._processes.get(camera_id)
+    if process:
+        logger.info(f"Waiting for ffmpeg to finish for camera {camera_id} (timeout={settings.FRAGMENT_DURATION + 300}s)...")
+        try:
+            process.wait(timeout=settings.FRAGMENT_DURATION + 300)
+        except Exception as e:
+            logger.error(f"Error waiting for ffmpeg on camera {camera_id}: {e}")
+
+        logger.info(f"ffmpeg finished for camera {camera_id}")
+
+        recorder_service._processes.pop(camera_id, None)
+        set_recording(camera_id, False)
+
+        try:
+            recording.refresh_from_db()
+            file_path = Path(recording.path)
+            if file_path.exists():
+                recording.size = file_path.stat().st_size
+            if recording.start_time:
+                recording.end_time = timezone.now()
+                recording.duration = int((recording.end_time - recording.start_time).total_seconds())
+            recording.save()
+
+            from recordings.tasks import generate_gif_task
+            generate_gif_task.delay(recording.id)
+            logger.info(f"Dispatched GIF generation for recording {recording.id}")
+        except Exception as e:
+            logger.error(f"Error updating recording {recording.id}: {e}")
+
+        try:
+            camera.refresh_from_db()
+            if camera.enabled:
+                logger.info(f"Auto-starting next recording for camera {camera_id}")
+                start_recording_task.delay(camera_id)
+            else:
+                logger.info(f"Camera {camera_id} disabled, not starting next recording")
+        except Exception as e:
+            logger.error(f"Error starting next recording for camera {camera_id}: {e}")
+
+    return True
 
 
 @shared_task(queue="recordings")
