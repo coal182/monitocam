@@ -93,3 +93,41 @@ FRAGMENT_DURATION = 3600
 GIF_DURATION = 5
 GIF_FPS = 5
 GIF_SPEED = 4
+
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "formatters": {
+        "verbose": {
+            "format": "{asctime} - {name} - {levelname} - {message}",
+            "style": "{",
+        },
+    },
+    "handlers": {
+        "console": {
+            "class": "logging.StreamHandler",
+            "formatter": "verbose",
+        },
+    },
+    "root": {
+        "handlers": ["console"],
+        "level": "INFO",
+    },
+    "loggers": {
+        "django": {
+            "handlers": ["console"],
+            "level": "INFO",
+            "propagate": False,
+        },
+        "cameras": {
+            "handlers": ["console"],
+            "level": "DEBUG",
+            "propagate": False,
+        },
+        "recordings": {
+            "handlers": ["console"],
+            "level": "DEBUG",
+            "propagate": False,
+        },
+    },
+}
