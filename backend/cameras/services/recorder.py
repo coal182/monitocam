@@ -7,6 +7,8 @@ from datetime import datetime
 
 from django.conf import settings
 
+from cameras.services.recording_status import set_recording as redis_set_recording
+
 logger = logging.getLogger(__name__)
 
 
@@ -46,6 +48,7 @@ class RecorderService:
                 preexec_fn=os.setsid,
             )
             self._processes[camera_id] = process
+            redis_set_recording(camera_id, True)
             logger.info(f"Started recording camera {camera_id}: {output_file}")
             return True
         except Exception as e:
@@ -54,6 +57,7 @@ class RecorderService:
 
     def stop_recording(self, camera_id: int) -> bool:
         if camera_id not in self._processes:
+            redis_set_recording(camera_id, False)
             return False
 
         process = self._processes[camera_id]
@@ -68,11 +72,13 @@ class RecorderService:
                 pass
         finally:
             del self._processes[camera_id]
+            redis_set_recording(camera_id, False)
             logger.info(f"Stopped recording camera {camera_id}")
         return True
 
     def is_recording(self, camera_id: int) -> bool:
-        return camera_id in self._processes
+        from cameras.services.recording_status import is_recording as redis_is_recording
+        return redis_is_recording(camera_id)
 
     def stop_all(self):
         for camera_id in list(self._processes.keys()):

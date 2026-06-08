@@ -5,15 +5,19 @@ services:
       - "8585:8585"
     environment:
       - DJANGO_SETTINGS_MODULE=config.settings.dev
+      - RECORDINGS_PATH=/var/lib/monitocam/recordings
     volumes:
       - ./backend:/app
+      - ./recordings:/var/lib/monitocam/recordings
 
   celery-worker:
     command: celery -A config.celery worker --loglevel=debug --concurrency=2 --pool=threads -Q recordings,media,maintenance
     environment:
       - DJANGO_SETTINGS_MODULE=config.settings.dev
+      - RECORDINGS_PATH=/var/lib/monitocam/recordings
     volumes:
       - ./backend:/app
+      - ./recordings:/var/lib/monitocam/recordings
 
   celery-beat:
     command: celery -A config.celery beat --loglevel=debug --scheduler django_celery_beat.schedulers:DatabaseScheduler

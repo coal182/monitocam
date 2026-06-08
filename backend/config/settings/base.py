@@ -84,7 +84,13 @@ SIMPLE_JWT = {
 }
 
 CORS_ALLOW_CREDENTIALS = True
-APPEND_SLASH = False
+
+CACHES = {
+    "default": {
+        "BACKEND": "django.core.cache.backends.redis.RedisCache",
+        "LOCATION": os.environ.get("REDIS_URL", "redis://localhost:6379/0"),
+    }
+}
 
 RECORDINGS_PATH = os.environ.get(
     "RECORDINGS_PATH", "/var/lib/monitocam/recordings"
