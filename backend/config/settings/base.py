@@ -84,6 +84,7 @@ SIMPLE_JWT = {
 }
 
 CORS_ALLOW_CREDENTIALS = True
+APPEND_SLASH = False
 
 RECORDINGS_PATH = os.environ.get(
     "RECORDINGS_PATH", "/var/lib/monitocam/recordings"
