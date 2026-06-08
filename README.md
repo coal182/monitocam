@@ -71,19 +71,16 @@ JWT_SECRET_KEY=change-me-in-production
 # CERTBOT_EMAIL=admin@example.com
 ```
 
-### Configuración YAML
+### Configuración
 
-Editar `backend/config.yaml`:
+Los valores de grabación están en `backend/config/settings/base.py`:
 
-```yaml
-storage:
-  base_path: "/var/lib/monitocam/recordings"
-
-recording:
-  fragment_duration: 3600  # 1 hora
-  gif_duration: 5          # 5 segundos
-  gif_fps: 5
-  gif_speed: 4
+```python
+RECORDINGS_PATH = "/var/lib/monitocam/recordings"
+FRAGMENT_DURATION = 3600  # 1 hora
+GIF_DURATION = 5          # 5 segundos
+GIF_FPS = 5
+GIF_SPEED = 4
 ```
 
 ## Arquitectura Docker
@@ -113,12 +110,12 @@ recording:
 | `/cameras/` | POST | Crear cámara |
 | `/cameras/{id}/` | GET | Obtener cámara |
 | `/cameras/{id}/` | DELETE | Eliminar cámara |
-| `/cameras/{id}/start_recording/` | POST | Iniciar grabación |
-| `/cameras/{id}/stop_recording/` | POST | Detener grabación |
+| `/cameras/{id}/start/` | POST | Iniciar grabación |
+| `/cameras/{id}/stop/` | POST | Detener grabación |
 | `/cameras/{id}/status/` | GET | Estado de grabación |
 | `/recordings/` | GET | Listar grabaciones |
 | `/recordings/{id}/stream/` | GET | Stream MP4 |
-| `/recordings/{id}/get_gif/` | GET | Preview GIF |
+| `/recordings/gifs/list/` | GET | Listar GIFs |
 | `/recordings/cleanup/{days}/` | DELETE | Eliminar grabaciones mayores a N días |
 | `/health/` | GET | Health check |
 
@@ -179,7 +176,7 @@ monitocam/
 │   │   ├── serializers.py      # DRF serializers
 │   │   ├── tasks.py            # Celery tasks
 │   │   └── services/           # GifService
-│   ├── auth/                   # Autenticación
+│   ├── accounts/               # Autenticación
 │   │   ├── backends.py         # EnvAuthBackend
 │   │   ├── authentication.py   # JWTCookieAuthentication
 │   │   ├── views.py            # Login, Logout, Me
