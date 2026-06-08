@@ -1,0 +1,23 @@
+services:
+  api:
+    command: uvicorn config.asgi:application --host 0.0.0.0 --port 8585 --reload
+    ports:
+      - "8585:8585"
+    environment:
+      - DJANGO_SETTINGS_MODULE=config.settings.dev
+    volumes:
+      - ./backend:/app
+
+  celery-worker:
+    command: celery -A config.celery worker --loglevel=debug --concurrency=2 --pool=threads -Q recordings,media,maintenance
+    environment:
+      - DJANGO_SETTINGS_MODULE=config.settings.dev
+    volumes:
+      - ./backend:/app
+
+  celery-beat:
+    command: celery -A config.celery beat --loglevel=debug --scheduler django_celery_beat.schedulers:DatabaseScheduler
+    environment:
+      - DJANGO_SETTINGS_MODULE=config.settings.dev
+    volumes:
+      - ./backend:/app
