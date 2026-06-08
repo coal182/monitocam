@@ -49,13 +49,13 @@ class CameraViewSet(viewsets.ModelViewSet):
             }
         )
 
-    @action(detail=True, methods=["post"])
+    @action(detail=True, methods=["post"], url_path="start")
     def start_recording(self, request, pk=None):
         camera = self.get_object()
         start_recording_task.delay(camera.id)
         return Response({"status": "recording", "camera_id": camera.id})
 
-    @action(detail=True, methods=["post"])
+    @action(detail=True, methods=["post"], url_path="stop")
     def stop_recording(self, request, pk=None):
         camera = self.get_object()
         stop_recording_task.delay(camera.id)

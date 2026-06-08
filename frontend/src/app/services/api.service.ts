@@ -10,23 +10,23 @@ export class ApiService {
   private http = inject(HttpClient);
 
   getCameras() {
-    return firstValueFrom(this.http.get<Camera[]>(`${this.baseUrl}/cameras`));
+    return firstValueFrom(this.http.get<Camera[]>(`${this.baseUrl}/cameras/`));
   }
 
   createCamera(data: CameraCreate) {
-    return firstValueFrom(this.http.post<Camera>(`${this.baseUrl}/cameras`, data));
+    return firstValueFrom(this.http.post<Camera>(`${this.baseUrl}/cameras/`, data));
   }
 
   deleteCamera(id: number) {
-    return firstValueFrom(this.http.delete<void>(`${this.baseUrl}/cameras/${id}`));
+    return firstValueFrom(this.http.delete<void>(`${this.baseUrl}/cameras/${id}/`));
   }
 
   startRecording(id: number) {
-    return firstValueFrom(this.http.post<void>(`${this.baseUrl}/cameras/${id}/start`, {}));
+    return firstValueFrom(this.http.post<void>(`${this.baseUrl}/cameras/${id}/start/`, {}));
   }
 
   stopRecording(id: number) {
-    return firstValueFrom(this.http.post<void>(`${this.baseUrl}/cameras/${id}/stop`, {}));
+    return firstValueFrom(this.http.post<void>(`${this.baseUrl}/cameras/${id}/stop/`, {}));
   }
 
   getRecordings(params?: { camera_id?: number; date?: string; page?: number; page_size?: number }) {
@@ -38,7 +38,7 @@ export class ApiService {
         }
       });
     }
-    const url = `${this.baseUrl}/recordings${searchParams.toString() ? '?' + searchParams : ''}`;
+    const url = `${this.baseUrl}/recordings/${searchParams.toString() ? '?' + searchParams : ''}`;
     return firstValueFrom(this.http.get<Recording[]>(url));
   }
 
@@ -47,40 +47,40 @@ export class ApiService {
     if (params?.camera_id) {
       searchParams.set('camera_id', params.camera_id.toString());
     }
-    const url = `${this.baseUrl}/recordings/gifs/list${searchParams.toString() ? '?' + searchParams : ''}`;
+    const url = `${this.baseUrl}/recordings/gifs/list/${searchParams.toString() ? '?' + searchParams : ''}`;
     return firstValueFrom(this.http.get<GifItem[]>(url));
   }
 
   deleteRecording(id: string) {
-    return firstValueFrom(this.http.delete<void>(`${this.baseUrl}/recordings/${id}`));
+    return firstValueFrom(this.http.delete<void>(`${this.baseUrl}/recordings/${id}/`));
   }
 
   cleanupOldRecordings(days: number) {
-    return firstValueFrom(this.http.delete<void>(`${this.baseUrl}/recordings/cleanup/${days}`));
+    return firstValueFrom(this.http.delete<void>(`${this.baseUrl}/recordings/cleanup/${days}/`));
   }
 
   getGifUrl(id: string): string {
-    return `/api/recordings/gifs/${id}/file`;
+    return `/api/recordings/gifs/${id}/file/`;
   }
 
   getDownloadUrl(id: string): string {
-    return `/api/recordings/${id}/download`;
+    return `/api/recordings/${id}/download/`;
   }
 
   login(username: string, password: string) {
     const body = new URLSearchParams();
     body.set('username', username);
     body.set('password', password);
-    return firstValueFrom(this.http.post<{ username: string }>(`${this.baseUrl}/auth/login`, body.toString(), {
+    return firstValueFrom(this.http.post<{ username: string }>(`${this.baseUrl}/auth/login/`, body.toString(), {
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
     }));
   }
 
   logout() {
-    return firstValueFrom(this.http.post<void>(`${this.baseUrl}/auth/logout`, {}));
+    return firstValueFrom(this.http.post<void>(`${this.baseUrl}/auth/logout/`, {}));
   }
 
   checkAuth() {
-    return firstValueFrom(this.http.get<{ username: string }>(`${this.baseUrl}/auth/me`));
+    return firstValueFrom(this.http.get<{ username: string }>(`${this.baseUrl}/auth/me/`));
   }
 }
