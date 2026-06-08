@@ -5,7 +5,7 @@ from core.views import health_check
 urlpatterns = [
     path("admin/", admin.site.urls),
     path("health/", health_check, name="health"),
-    path("auth/", include("auth.urls")),
+    path("auth/", include("accounts.urls")),
     path("cameras/", include("cameras.urls")),
     path("recordings/", include("recordings.urls")),
 ]

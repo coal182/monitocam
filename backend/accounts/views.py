@@ -7,8 +7,8 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import AccessToken
 
-from auth.backends import EnvAuthBackend
-from auth.serializers import LoginSerializer, UserSerializer
+from accounts.backends import EnvAuthBackend
+from accounts.serializers import LoginSerializer, UserSerializer
 
 
 class LoginView(APIView):

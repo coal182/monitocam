@@ -18,7 +18,7 @@ INSTALLED_APPS = [
     "django_celery_beat",
     "cameras",
     "recordings",
-    "auth",
+    "accounts",
     "core",
 ]
 
@@ -67,7 +67,7 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": [
-        "auth.authentication.JWTCookieAuthentication",
+        "accounts.authentication.JWTCookieAuthentication",
     ],
     "DEFAULT_PERMISSION_CLASSES": [
         "rest_framework.permissions.IsAuthenticated",
