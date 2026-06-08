@@ -4,7 +4,7 @@ from rest_framework.routers import DefaultRouter
 from recordings.views import RecordingViewSet
 
 router = DefaultRouter()
-router.register(r"recordings", RecordingViewSet)
+router.register(r"", RecordingViewSet)
 
 urlpatterns = [
     path("", include(router.urls)),
