@@ -56,6 +56,15 @@ class RecordingViewSet(viewsets.ModelViewSet):
             filename=gif_path.name,
         )
 
+    @action(detail=False, methods=["get"], url_path="gifs/list")
+    def gifs_list(self, request):
+        qs = self.get_queryset().filter(has_gif=True)
+        camera_id = request.query_params.get("camera_id")
+        if camera_id:
+            qs = qs.filter(camera_id=camera_id)
+        serializer = RecordingSerializer(qs, many=True)
+        return Response(serializer.data)
+
     @action(detail=False, methods=["delete"], url_path="cleanup/(?P<days>[0-9]+)")
     def cleanup(self, request, days=None):
         days = int(days)
