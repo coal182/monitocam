@@ -96,7 +96,7 @@ RECORDINGS_PATH = os.environ.get(
     "RECORDINGS_PATH", "/var/lib/monitocam/recordings"
 )
 
-FRAGMENT_DURATION = 3600
+FRAGMENT_DURATION = 1800
 GIF_DURATION = 5
 GIF_FPS = 5
 GIF_SPEED = 4

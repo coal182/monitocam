@@ -5,7 +5,7 @@ Sistema de videovigilancia para cámaras IP con grabación continua y previews e
 ## Características
 
 - Grabación continua de cámaras IP via RTSP
-- Fragmentos de video de 1 hora en formato MP4
+- Fragmentos de video de 30 minutos en formato MP4
 - Previews animados en GIF para cada grabación
 - Interfaz web Angular 21
 - Autenticación JWT con cookies HttpOnly
@@ -77,7 +77,7 @@ Los valores de grabación están en `backend/config/settings/base.py`:
 
 ```python
 RECORDINGS_PATH = "/var/lib/monitocam/recordings"
-FRAGMENT_DURATION = 3600  # 1 hora
+FRAGMENT_DURATION = 1800  # 30 minutos
 GIF_DURATION = 5          # 5 segundos
 GIF_FPS = 5
 GIF_SPEED = 4
