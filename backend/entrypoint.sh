@@ -19,6 +19,7 @@ echo "Running migrations..."
 python manage.py migrate --noinput
 
 echo "Collecting static files..."
+mkdir -p ${STATIC_ROOT:-/var/lib/monitocam/staticfiles}
 python manage.py collectstatic --noinput
 
 echo "Starting application..."
