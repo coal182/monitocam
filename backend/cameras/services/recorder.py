@@ -30,8 +30,8 @@ class RecorderService:
         timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M")
         output_file = output_dir / f"{safe_name}_{timestamp}.mp4"
 
-        stderr_file = tempfile.NamedTemporaryFile(mode="w", suffix=".log", delete=False)
-        self._stderr_files[camera_id] = stderr_file
+        stderr_path = tempfile.mktemp(suffix=".log")
+        self._stderr_files[camera_id] = stderr_path
 
         cmd = [
             "ffmpeg",
@@ -46,12 +46,14 @@ class RecorderService:
         ]
 
         try:
+            stderr_fd = open(stderr_path, "w")
             process = subprocess.Popen(
                 cmd,
                 stdout=subprocess.DEVNULL,
-                stderr=stderr_file,
+                stderr=stderr_fd,
                 preexec_fn=os.setsid,
             )
+            stderr_fd.close()
             self._processes[camera_id] = process
             redis_set_recording(camera_id, True)
             logger.info(f"Started recording camera {camera_id}: {output_file}")
@@ -61,12 +63,12 @@ class RecorderService:
             return False
 
     def get_ffmpeg_error(self, camera_id: int) -> str:
-        stderr_file = self._stderr_files.pop(camera_id, None)
-        if stderr_file:
+        stderr_path = self._stderr_files.pop(camera_id, None)
+        if stderr_path:
             try:
-                stderr_file.seek(0)
-                error = stderr_file.read()[-2000:]
-                os.unlink(stderr_file.name)
+                with open(stderr_path, "r") as f:
+                    error = f.read()[-2000:]
+                os.unlink(stderr_path)
                 return error
             except Exception:
                 pass
