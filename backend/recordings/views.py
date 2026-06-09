@@ -45,7 +45,6 @@ class RecordingViewSet(viewsets.ModelViewSet):
 
         if not gif_path.exists():
             from recordings.tasks import generate_gif_task
-
             generate_gif_task.delay(recording.id)
             return Response({"status": "generating", "message": "GIF generation started"})
 

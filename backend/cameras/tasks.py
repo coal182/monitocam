@@ -71,9 +71,25 @@ def start_recording_task(camera_id: int):
                 recording.duration = int((recording.end_time - recording.start_time).total_seconds())
             recording.save()
 
-            from recordings.tasks import generate_gif_task
-            generate_gif_task.delay(recording.id)
-            logger.info(f"Dispatched GIF generation for recording {recording.id}")
+            from recordings.services.giffer import gif_service
+            gif_path = gif_service.get_gif_path(recording.path)
+            if not gif_service.gif_exists(recording.path):
+                result = gif_service.generate_gif(
+                    recording.path, gif_path,
+                    duration=settings.GIF_DURATION,
+                    fps=settings.GIF_FPS,
+                    speed=settings.GIF_SPEED,
+                )
+                if result:
+                    recording.has_gif = True
+                    recording.save(update_fields=["has_gif"])
+                    logger.info(f"Generated GIF for recording {recording.id}")
+                else:
+                    logger.error(f"Failed to generate GIF for recording {recording.id}")
+            else:
+                recording.has_gif = True
+                recording.save(update_fields=["has_gif"])
+                logger.info(f"GIF already exists for recording {recording.id}")
         except Exception as e:
             logger.error(f"Error updating recording {recording.id}: {e}")
 

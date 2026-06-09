@@ -49,7 +49,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.backend
-    command: celery -A config.celery worker --loglevel=info --concurrency=1 --pool=prefork -Q recordings,media,maintenance
+    command: celery -A config.celery worker --loglevel=info --concurrency=2 --pool=prefork -Q recordings,media,maintenance
     volumes:
       - /mnt/nas-pictures/monitocam:/var/lib/monitocam/recordings
     environment:
