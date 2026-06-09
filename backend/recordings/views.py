@@ -23,6 +23,19 @@ class RecordingViewSet(viewsets.ModelViewSet):
             qs = qs.filter(camera_id=camera_id)
         return qs
 
+    def destroy(self, request, *args, **kwargs):
+        recording = self.get_object()
+        file_path = Path(recording.path)
+
+        if file_path.exists():
+            os.remove(file_path)
+
+        gif_path = file_path.with_suffix(".gif")
+        if gif_path.exists():
+            os.remove(gif_path)
+
+        return super().destroy(request, *args, **kwargs)
+
     @action(detail=True, methods=["get"])
     def stream(self, request, pk=None):
         recording = self.get_object()
