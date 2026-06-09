@@ -56,42 +56,63 @@ def start_recording_task(camera_id: int):
         except Exception as e:
             logger.error(f"Error waiting for ffmpeg on camera {camera_id}: {e}")
 
-        logger.info(f"ffmpeg finished for camera {camera_id}")
+        stderr_output = recorder_service.get_ffmpeg_error(camera_id)
+        returncode = process.returncode
+        duration = (timezone.now() - recording.start_time).total_seconds()
+
+        if returncode != 0:
+            logger.error(f"ffmpeg failed for camera {camera_id} (exit={returncode}, duration={duration:.1f}s)")
+            if stderr_output:
+                for line in stderr_output.strip().split("\n")[-5:]:
+                    logger.error(f"  ffmpeg: {line}")
+        else:
+            logger.info(f"ffmpeg finished for camera {camera_id}")
 
         recorder_service._processes.pop(camera_id, None)
         set_recording(camera_id, False)
 
         try:
-            recording.refresh_from_db()
             file_path = Path(recording.path)
-            if file_path.exists():
+            if file_path.exists() and returncode == 0:
+                recording.refresh_from_db()
                 recording.size = file_path.stat().st_size
-            if recording.start_time:
                 recording.end_time = timezone.now()
                 recording.duration = int((recording.end_time - recording.start_time).total_seconds())
-            recording.save()
+                recording.save()
 
-            from recordings.services.giffer import gif_service
-            gif_path = gif_service.get_gif_path(recording.path)
-            if not gif_service.gif_exists(recording.path):
-                result = gif_service.generate_gif(
-                    recording.path, gif_path,
-                    duration=settings.GIF_DURATION,
-                    fps=settings.GIF_FPS,
-                    speed=settings.GIF_SPEED,
-                )
-                if result:
+                from recordings.services.giffer import gif_service
+                gif_path = gif_service.get_gif_path(recording.path)
+                if not gif_service.gif_exists(recording.path):
+                    result = gif_service.generate_gif(
+                        recording.path, gif_path,
+                        duration=settings.GIF_DURATION,
+                        fps=settings.GIF_FPS,
+                        speed=settings.GIF_SPEED,
+                    )
+                    if result:
+                        recording.has_gif = True
+                        recording.save(update_fields=["has_gif"])
+                        logger.info(f"Generated GIF for recording {recording.id}")
+                    else:
+                        logger.error(f"Failed to generate GIF for recording {recording.id}")
+                else:
                     recording.has_gif = True
                     recording.save(update_fields=["has_gif"])
-                    logger.info(f"Generated GIF for recording {recording.id}")
-                else:
-                    logger.error(f"Failed to generate GIF for recording {recording.id}")
+                    logger.info(f"GIF already exists for recording {recording.id}")
+            elif returncode != 0:
+                recording.delete()
+                logger.info(f"Deleted failed recording {recording.id} (no file)")
             else:
-                recording.has_gif = True
-                recording.save(update_fields=["has_gif"])
-                logger.info(f"GIF already exists for recording {recording.id}")
+                logger.warning(f"Video file missing for recording {recording.id}: {recording.path}")
         except Exception as e:
             logger.error(f"Error updating recording {recording.id}: {e}")
+
+        import time
+
+        if returncode != 0:
+            retry_delay = 30
+            logger.info(f"Retrying camera {camera_id} in {retry_delay}s...")
+            time.sleep(retry_delay)
 
         try:
             camera.refresh_from_db()

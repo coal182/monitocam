@@ -2,6 +2,7 @@ import subprocess
 import os
 import signal
 import logging
+import tempfile
 from pathlib import Path
 from datetime import datetime
 
@@ -15,6 +16,7 @@ logger = logging.getLogger(__name__)
 class RecorderService:
     def __init__(self):
         self._processes: dict[int, subprocess.Popen] = {}
+        self._stderr_files: dict[int, tempfile.NamedTemporaryFile] = {}
 
     def start_recording(self, camera_id: int, camera_name: str, rtsp_url: str) -> bool:
         if camera_id in self._processes:
@@ -27,6 +29,9 @@ class RecorderService:
         safe_name = "".join(c for c in camera_name if c.isalnum() or c in "_-")
         timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M")
         output_file = output_dir / f"{safe_name}_{timestamp}.mp4"
+
+        stderr_file = tempfile.NamedTemporaryFile(mode="w", suffix=".log", delete=False)
+        self._stderr_files[camera_id] = stderr_file
 
         cmd = [
             "ffmpeg",
@@ -44,7 +49,7 @@ class RecorderService:
             process = subprocess.Popen(
                 cmd,
                 stdout=subprocess.DEVNULL,
-                stderr=subprocess.DEVNULL,
+                stderr=stderr_file,
                 preexec_fn=os.setsid,
             )
             self._processes[camera_id] = process
@@ -54,6 +59,18 @@ class RecorderService:
         except Exception as e:
             logger.error(f"Failed to start recording camera {camera_id}: {e}")
             return False
+
+    def get_ffmpeg_error(self, camera_id: int) -> str:
+        stderr_file = self._stderr_files.pop(camera_id, None)
+        if stderr_file:
+            try:
+                stderr_file.seek(0)
+                error = stderr_file.read()[-2000:]
+                os.unlink(stderr_file.name)
+                return error
+            except Exception:
+                pass
+        return ""
 
     def stop_recording(self, camera_id: int) -> bool:
         if camera_id not in self._processes:
@@ -72,6 +89,7 @@ class RecorderService:
                 pass
         finally:
             del self._processes[camera_id]
+            self.get_ffmpeg_error(camera_id)
             redis_set_recording(camera_id, False)
             logger.info(f"Stopped recording camera {camera_id}")
         return True
