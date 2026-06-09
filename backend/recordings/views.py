@@ -39,6 +39,21 @@ class RecordingViewSet(viewsets.ModelViewSet):
         )
 
     @action(detail=True, methods=["get"])
+    def download(self, request, pk=None):
+        recording = self.get_object()
+        file_path = Path(recording.path)
+
+        if not file_path.exists():
+            raise Http404("Recording file not found")
+
+        return FileResponse(
+            open(file_path, "rb"),
+            content_type="video/mp4",
+            as_attachment=True,
+            filename=recording.filename,
+        )
+
+    @action(detail=True, methods=["get"])
     def get_gif(self, request, pk=None):
         recording = self.get_object()
         gif_path = Path(recording.path).with_suffix(".gif")
