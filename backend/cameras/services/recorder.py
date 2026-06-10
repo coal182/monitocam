@@ -4,9 +4,9 @@ import signal
 import logging
 import tempfile
 from pathlib import Path
-from datetime import datetime
 
 from django.conf import settings
+from django.utils import timezone
 
 from cameras.services.recording_status import set_recording as redis_set_recording
 
@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 class RecorderService:
     def __init__(self):
         self._processes: dict[int, subprocess.Popen] = {}
-        self._stderr_files: dict[int, tempfile.NamedTemporaryFile] = {}
+        self._stderr_files: dict[int, str] = {}
 
     def start_recording(self, camera_id: int, camera_name: str, rtsp_url: str) -> bool:
         if camera_id in self._processes:
@@ -27,7 +27,7 @@ class RecorderService:
         output_dir.mkdir(parents=True, exist_ok=True)
 
         safe_name = "".join(c for c in camera_name if c.isalnum() or c in "_-")
-        timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M")
+        timestamp = timezone.localtime().strftime("%Y-%m-%d_%H-%M")
         output_file = output_dir / f"{safe_name}_{timestamp}.mp4"
 
         stderr_path = tempfile.mktemp(suffix=".log")

@@ -82,13 +82,14 @@ export class RecordingsComponent implements OnInit, OnDestroy {
 
   formatTimestamp(ts: string): string {
     if (!ts) return '';
-    const parts = ts.split('_');
-    if (parts.length >= 2) {
-      const date = parts[parts.length - 2];
-      const time = parts[parts.length - 1].replace('-', ':');
-      return `${date} ${time}`;
-    }
-    return ts.replace(/_/g, ' ');
+    const date = new Date(ts);
+    return date.toLocaleString('es-ES', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
   }
 
   getGifUrl(id: string): string {

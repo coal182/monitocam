@@ -29,7 +29,7 @@ def _create_recording(camera):
 
     output_dir = Path(settings.RECORDINGS_PATH) / f"camera_{camera.id}"
     safe_name = "".join(c for c in camera.name if c.isalnum() or c in "_-")
-    timestamp = timezone.now().strftime("%Y-%m-%d_%H-%M")
+    timestamp = timezone.localtime().strftime("%Y-%m-%d_%H-%M")
     filename = f"{safe_name}_{timestamp}.mp4"
     output_file = output_dir / filename
 

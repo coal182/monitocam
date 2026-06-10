@@ -6,6 +6,7 @@ services:
     environment:
       - DJANGO_SETTINGS_MODULE=config.settings.dev
       - RECORDINGS_PATH=/var/lib/monitocam/recordings
+      - TIME_ZONE=${TIME_ZONE:-Europe/Madrid}
     volumes:
       - ./backend:/app
       - /mnt/nas-pictures/monitocam:/var/lib/monitocam/recordings
@@ -15,6 +16,7 @@ services:
     environment:
       - DJANGO_SETTINGS_MODULE=config.settings.dev
       - RECORDINGS_PATH=/var/lib/monitocam/recordings
+      - TIME_ZONE=${TIME_ZONE:-Europe/Madrid}
     volumes:
       - ./backend:/app
       - /mnt/nas-pictures/monitocam:/var/lib/monitocam/recordings
@@ -23,5 +25,6 @@ services:
     command: celery -A config.celery beat --loglevel=debug --scheduler django_celery_beat.schedulers:DatabaseScheduler
     environment:
       - DJANGO_SETTINGS_MODULE=config.settings.dev
+      - TIME_ZONE=${TIME_ZONE:-Europe/Madrid}
     volumes:
       - ./backend:/app
