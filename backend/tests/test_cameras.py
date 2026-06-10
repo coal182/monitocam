@@ -6,18 +6,6 @@ os.environ.setdefault("AUTH_USERNAME", "testuser")
 os.environ.setdefault("AUTH_PASSWORD", "testpass")
 
 
-@pytest.fixture
-def auth_client(client):
-    login_response = client.post(
-        "/auth/login/",
-        {"username": "testuser", "password": "testpass"},
-        content_type="application/json",
-    )
-    token = login_response.json()["access_token"]
-    client.cookies.set("access_token", token)
-    return client
-
-
 @pytest.mark.django_db
 class TestCameras:
     def test_list_cameras_empty(self, auth_client):
@@ -46,36 +34,78 @@ class TestCameras:
         )
         assert response.status_code == 400
 
-    def test_get_camera(self, auth_client):
-        create_response = auth_client.post(
-            "/cameras/",
-            {"name": "Test", "rtsp_url": "rtsp://test.local/stream"},
-            content_type="application/json",
-        )
-        camera_id = create_response.json()["id"]
-
-        response = auth_client.get(f"/cameras/{camera_id}/")
+    def test_get_camera(self, auth_client, camera):
+        response = auth_client.get(f"/cameras/{camera.id}/")
         assert response.status_code == 200
-        assert response.json()["id"] == camera_id
+        assert response.json()["id"] == camera.id
 
     def test_get_camera_not_found(self, auth_client):
         response = auth_client.get("/cameras/9999/")
         assert response.status_code == 404
 
-    def test_delete_camera(self, auth_client):
-        create_response = auth_client.post(
-            "/cameras/",
-            {"name": "ToDelete", "rtsp_url": "rtsp://test.local/stream"},
-            content_type="application/json",
-        )
-        camera_id = create_response.json()["id"]
-
-        response = auth_client.delete(f"/cameras/{camera_id}/")
+    def test_delete_camera(self, auth_client, camera):
+        response = auth_client.delete(f"/cameras/{camera.id}/")
         assert response.status_code == 204
 
-        get_response = auth_client.get(f"/cameras/{camera_id}/")
+        get_response = auth_client.get(f"/cameras/{camera.id}/")
         assert get_response.status_code == 404
 
     def test_unauthorized_access(self, client):
         response = client.get("/cameras/")
         assert response.status_code == 401
+
+
+@pytest.mark.django_db
+class TestCameraRecording:
+    def test_start_recording(self, auth_client, camera):
+        response = auth_client.post(
+            f"/cameras/{camera.id}/start/",
+            {},
+            content_type="application/json",
+        )
+        assert response.status_code == 200
+        data = response.json()
+        assert data["status"] == "recording"
+        assert data["camera_id"] == camera.id
+
+    def test_stop_recording(self, auth_client, camera):
+        response = auth_client.post(
+            f"/cameras/{camera.id}/stop/",
+            {},
+            content_type="application/json",
+        )
+        assert response.status_code == 200
+        data = response.json()
+        assert data["status"] == "stopped"
+        assert data["camera_id"] == camera.id
+
+    def test_camera_status(self, auth_client, camera):
+        response = auth_client.get(f"/cameras/{camera.id}/status/")
+        assert response.status_code == 200
+        data = response.json()
+        assert data["id"] == camera.id
+        assert data["name"] == camera.name
+        assert data["is_recording"] is False
+        assert data["status"] == "stopped"
+
+    def test_camera_statuses(self, auth_client, cameras):
+        response = auth_client.get("/cameras/statuses/")
+        assert response.status_code == 200
+        data = response.json()
+        assert len(data) == len(cameras)
+        assert all("id" in c and "name" in c and "is_recording" in c for c in data)
+
+    def test_start_disabled_camera(self, auth_client, disabled_camera):
+        response = auth_client.post(
+            f"/cameras/{disabled_camera.id}/start/",
+            {},
+            content_type="application/json",
+        )
+        assert response.status_code == 200
+
+    def test_sse_endpoint(self, auth_client):
+        response = auth_client.get("/cameras/events/")
+        assert response.status_code == 200
+        assert response["Content-Type"] == "text/event-stream"
+        assert response["Cache-Control"] == "no-cache"
+        assert response["X-Accel-Buffering"] == "no"

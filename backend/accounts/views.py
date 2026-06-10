@@ -57,7 +57,7 @@ class LogoutView(APIView):
 
     def post(self, request):
         response = Response({"message": "Logged out"})
-        response.delete_cookie(key="access_token", httponly=True, samesite="lax")
+        response.delete_cookie(key="access_token", samesite="lax")
         return response
 
 

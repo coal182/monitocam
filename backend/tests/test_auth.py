@@ -35,7 +35,7 @@ class TestAuth:
         )
         token = login_response.json()["access_token"]
 
-        client.cookies.set("access_token", token)
+        client.cookies["access_token"] = token
         response = client.get("/auth/me/")
         assert response.status_code == 200
         assert response.json()["username"] == "testuser"
