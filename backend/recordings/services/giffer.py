@@ -27,7 +27,7 @@ class GifService:
             return None
 
         speed = max(1, int(video_duration / gif_target_duration))
-        timeout = int(video_duration / speed) + 60
+        timeout = max(180, video_duration // 5) + 120
 
         logger.info(f"Generating GIF: speed={speed}x, timeout={timeout}s, input={video_duration}s")
 
