@@ -30,9 +30,9 @@ def generate_gif_task(recording_id: int):
     result = gif_service.generate_gif(
         video_path,
         gif_path,
-        duration=settings.GIF_DURATION,
+        video_duration=recording.duration or settings.FRAGMENT_DURATION,
+        gif_target_duration=settings.GIF_TARGET_DURATION,
         fps=settings.GIF_FPS,
-        speed=settings.GIF_SPEED,
     )
 
     if result:

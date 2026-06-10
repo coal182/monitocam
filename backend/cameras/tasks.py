@@ -85,9 +85,9 @@ def start_recording_task(camera_id: int):
                 if not gif_service.gif_exists(recording.path):
                     result = gif_service.generate_gif(
                         recording.path, gif_path,
-                        duration=settings.GIF_DURATION,
+                        video_duration=recording.duration or settings.FRAGMENT_DURATION,
+                        gif_target_duration=settings.GIF_TARGET_DURATION,
                         fps=settings.GIF_FPS,
-                        speed=settings.GIF_SPEED,
                     )
                     if result:
                         recording.has_gif = True
