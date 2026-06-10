@@ -59,7 +59,7 @@ export class RecordingsComponent implements OnInit, OnDestroy {
     const days = prompt('Eliminar grabaciones de hace cuántos días?', '7');
     if (!days) return;
     const daysNum = parseInt(days, 10);
-    if (isNaN(daysNum) || daysNum < 1) {
+    if (isNaN(daysNum) || daysNum < 0) {
       alert('Por favor ingresa un número válido de días');
       return;
     }
