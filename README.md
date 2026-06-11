@@ -1,89 +1,73 @@
 # MonitoCam
 
-Sistema de videovigilancia para cámaras IP con grabación continua y previews en GIF.
+IP camera video surveillance system with continuous recording and animated GIF previews.
 
-## Características
+## Features
 
-- Grabación continua de cámaras IP via RTSP
-- Fragmentos de video de 30 minutos en formato MP4
-- Previews animados en GIF para cada grabación
-- Interfaz web Angular 21
-- Autenticación JWT con cookies HttpOnly
+- Continuous recording of IP cameras via RTSP
+- 30-minute video fragments in MP4 format
+- Animated GIF timelapse previews for each recording
+- Real-time recording status via Server-Sent Events (SSE)
+- Angular 21 web interface
+- JWT authentication with HttpOnly cookies
 - Django 5 + Django REST Framework
-- Celery para tareas en segundo plano (grabación, GIFs, limpieza)
+- Celery for background tasks (recording, GIFs, cleanup)
 - PostgreSQL + Redis
-- Docker Compose para despliegue
-- Nginx como reverse proxy con SSL
+- Docker Compose deployment
+- Nginx reverse proxy
+- Configurable timezone (default: Europe/Madrid)
 
-## Requisitos
+## Requirements
 
-- Docker y Docker Compose
+- Docker and Docker Compose
 
-## Instalación
+## Installation
 
-### Desarrollo
+### Development
 
 ```bash
-# Copiar variables de entorno
 cp .env.example .env
-
-# Iniciar contenedores (dev mode con live reload)
 docker compose up -d
 
-# Acceder a la API
-http://localhost:8585
-
-# Acceder al frontend
-http://localhost:3000
+# API direct: http://localhost:8585
+# Frontend: http://localhost:80
+# Health: http://localhost/health/
 ```
 
-### Producción
+### Production
 
 ```bash
-# Configurar variables de entorno
 cp .env.example .env
-# Editar .env con valores seguros
-
-# Iniciar servicios
+# Edit .env with secure values
 docker compose up -d
-
-# Para SSL (certbot)
-docker compose --profile prod run certbot
+# For SSL: docker compose --profile prod run certbot
 ```
 
-## Configuración
+## Configuration
 
-### Variables de entorno (.env)
+### Environment Variables (.env)
 
 ```bash
-# Database
 DB_PASSWORD=postgres
-
-# Auth (hardcoded credentials)
 AUTH_USERNAME=admin
 AUTH_PASSWORD=admin
-
-# JWT
 JWT_SECRET_KEY=change-me-in-production
-
-# Domain (prod only)
-# DOMAIN=monitocam.example.com
-# CERTBOT_EMAIL=admin@example.com
+# TIME_ZONE=Europe/Madrid
 ```
 
-### Configuración
+### Recording Settings
 
-Los valores de grabación están en `backend/config/settings/base.py`:
+`backend/config/settings/base.py`:
 
 ```python
 RECORDINGS_PATH = "/var/lib/monitocam/recordings"
-FRAGMENT_DURATION = 1800  # 30 minutos
-GIF_DURATION = 5          # 5 segundos
-GIF_FPS = 5
-GIF_SPEED = 4
+FRAGMENT_DURATION = 1800  # 30 minutes
+GIF_TARGET_DURATION = 30  # speed auto-calculated
+GIF_FPS = 24
+TIME_ZONE = "Europe/Madrid"
 ```
 
-## Arquitectura Docker
+## Docker Architecture
 
 ```
 ┌─────────────┐     ┌─────────────┐
@@ -95,128 +79,74 @@ GIF_SPEED = 4
               │            │            │
         ┌─────▼─────┐ ┌────▼────┐ ┌────▼────┐
         │  postgres  │ │  redis  │ │ celery  │
-        │   (DB)     │ │ (broker)│ │ (worker)│
-        └───────────┘ └─────────┘ └─────────┘
+        │   (DB)     │ │(broker+ │ │ (worker)│
+        └───────────┘ │ pub/sub)│ └─────────┘
+                      └─────────┘
 ```
 
-## Endpoints API
+| Service | Role | Details |
+|---------|------|---------|
+| `postgres` | Database | PostgreSQL 16 |
+| `redis` | Cache + broker + pub/sub | Redis 7 |
+| `api` | Django app | Uvicorn ASGI, port 8585 |
+| `celery-worker` | Background tasks | `--concurrency=2 --pool=prefork` |
+| `celery-beat` | Periodic tasks | Daily cleanup |
+| `nginx` | Reverse proxy + SPA | Strips `/api/` prefix, SSE support |
 
-| Endpoint | Método | Descripción |
-|----------|--------|-------------|
-| `/auth/login/` | POST | Login (JSON: username, password) |
-| `/auth/logout/` | POST | Logout |
-| `/auth/me/` | GET | Usuario actual |
-| `/cameras/` | GET | Listar cámaras |
-| `/cameras/` | POST | Crear cámara |
-| `/cameras/{id}/` | GET | Obtener cámara |
-| `/cameras/{id}/` | DELETE | Eliminar cámara |
-| `/cameras/{id}/start/` | POST | Iniciar grabación |
-| `/cameras/{id}/stop/` | POST | Detener grabación |
-| `/cameras/{id}/status/` | GET | Estado de grabación |
-| `/recordings/` | GET | Listar grabaciones |
-| `/recordings/{id}/stream/` | GET | Stream MP4 |
-| `/recordings/gifs/list/` | GET | Listar GIFs |
-| `/recordings/cleanup/{days}/` | DELETE | Eliminar grabaciones mayores a N días |
-| `/health/` | GET | Health check |
+## API Endpoints
 
-## Desarrollo
+| Endpoint | Method | Auth | Description |
+|----------|--------|------|-------------|
+| `/auth/login/` | POST | No | Login |
+| `/auth/logout/` | POST | No | Logout |
+| `/auth/me/` | GET | Yes | Current user |
+| `/cameras/` | GET/POST | Yes | List/create cameras |
+| `/cameras/{id}/` | GET/DELETE | Yes | Get/delete camera |
+| `/cameras/{id}/start/` | POST | Yes | Start recording |
+| `/cameras/{id}/stop/` | POST | Yes | Stop recording |
+| `/cameras/{id}/status/` | GET | Yes | Recording status |
+| `/cameras/statuses/` | GET | Yes | All cameras status |
+| `/cameras/events/` | GET | No | SSE real-time status |
+| `/recordings/` | GET | Yes | List recordings |
+| `/recordings/{id}/` | DELETE | Yes | Delete recording + files |
+| `/recordings/{id}/stream/` | GET | Yes | Stream MP4 |
+| `/recordings/{id}/download/` | GET | Yes | Download MP4 |
+| `/recordings/{id}/get_gif/` | GET | Yes | Get/generate GIF |
+| `/recordings/gifs/{id}/file/` | GET | Yes | Serve GIF |
+| `/recordings/gifs/list/` | GET | Yes | List GIFs |
+| `/recordings/cleanup/{days}/` | DELETE | Yes | Cleanup (0 = all) |
+| `/health/` | GET | No | Health check |
 
-### Backend (Django)
+## Tests
 
 ```bash
-cd backend
-python -m venv venv
-source venv/bin/activate
-pip install -r requirements.txt
-python manage.py migrate
-python manage.py runserver 8585
+# Backend (no Docker needed)
+cd backend && python -m pytest tests/ -v
+
+# Frontend (no Docker needed)
+cd frontend && npx ng test --watch=false --browsers=ChromeHeadless
+
+# From Docker
+docker compose exec api python -m pytest tests/ -v
 ```
 
-### Frontend (Angular)
+94 tests: 48 backend + 46 frontend.
 
-```bash
-cd frontend
-npm install
-npm run start
-```
+## Celery
 
-### Tests
+- **celery-worker**: Recording + GIF tasks (`--concurrency=2`)
+- **celery-beat**: Daily cleanup
 
-```bash
-cd backend
-pytest tests/ -v
-```
+Queues: `recordings`, `media`, `maintenance`
 
-## Estructura del proyecto
+### Continuous Recording Chain
 
-```
-monitocam/
-├── docker-compose.yml          # Servicios Docker
-├── docker-compose.override.yml # Dev overrides
-├── Dockerfile.backend          # Django app
-├── Dockerfile.frontend         # Angular app
-├── nginx.conf                  # Reverse proxy
-├── .env.example                # Variables de entorno
-├── backend/
-│   ├── config/                 # Django project
-│   │   ├── settings/           # base.py, dev.py, prod.py
-│   │   ├── celery.py           # Celery config
-│   │   ├── urls.py             # Root URLs
-│   │   └── asgi.py             # ASGI (uvicorn)
-│   ├── cameras/                # App cámaras
-│   │   ├── models.py           # Camera model
-│   │   ├── views.py            # CameraViewSet
-│   │   ├── serializers.py      # DRF serializers
-│   │   ├── tasks.py            # Celery tasks
-│   │   ├── signals.py          # Auto-start recording
-│   │   └── services/           # RecorderService
-│   ├── recordings/             # App grabaciones
-│   │   ├── models.py           # Recording model
-│   │   ├── views.py            # RecordingViewSet
-│   │   ├── serializers.py      # DRF serializers
-│   │   ├── tasks.py            # Celery tasks
-│   │   └── services/           # GifService
-│   ├── accounts/               # Autenticación
-│   │   ├── backends.py         # EnvAuthBackend
-│   │   ├── authentication.py   # JWTCookieAuthentication
-│   │   ├── views.py            # Login, Logout, Me
-│   │   └── serializers.py      # Login, User serializers
-│   ├── core/                   # Compartido
-│   │   └── views.py            # Health check
-│   ├── tests/                  # Tests
-│   ├── manage.py
-│   └── requirements.txt
-└── frontend/                   # Angular app
-```
-
-## Celery Workers
-
-- **celery-worker**: Tareas de grabación y GIFs
-- **celery-beat**: Tareas periódicas (limpieza diaria)
-
-Colas:
-- `recordings`: Iniciar/detener grabación
-- `media`: Generación de GIFs
-- `maintenance`: Limpieza de grabaciones antiguas
+Fragment finishes → GIF generated → next fragment starts automatically.
+On failure: 30s retry delay → next attempt.
 
 ## Troubleshooting
 
-### Los contenedores no inician
-
 ```bash
-docker compose logs api
-docker compose logs celery-worker
-```
-
-### La base de datos no conecta
-
-```bash
-docker compose exec api python manage.py dbshell
-```
-
-### Las grabaciones no se inician
-
-```bash
-docker compose logs celery-worker
-docker compose exec api python manage.py shell -c "from cameras.models import Camera; print(Camera.objects.all())"
+docker compose logs celery-worker | grep -i "record\|ffmpeg\|error"
+docker compose exec redis redis-cli FLUSHDB  # Reset statuses
 ```

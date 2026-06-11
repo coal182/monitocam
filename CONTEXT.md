@@ -91,7 +91,7 @@ IP camera video surveillance system with continuous recording and animated GIF p
 |---------|-------|----------|
 | `FRAGMENT_DURATION` | `1800` (30 min) | `config/settings/base.py` |
 | `GIF_TARGET_DURATION` | `30` (seconds) | `config/settings/base.py` |
-| `GIF_FPS` | `5` | `config/settings/base.py` |
+| `GIF_FPS` | `24` | `config/settings/base.py` |
 | `RECORDINGS_PATH` | `/var/lib/monitocam/recordings` | `config/settings/base.py` |
 | `TIME_ZONE` | `Europe/Madrid` (configurable via env var) | `config/settings/base.py` |
 | `JWT expiry` | 24 hours | `config/settings/base.py` |
