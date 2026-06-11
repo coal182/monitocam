@@ -98,7 +98,7 @@ RECORDINGS_PATH = os.environ.get(
 
 FRAGMENT_DURATION = 1800
 GIF_TARGET_DURATION = 30
-GIF_FPS = 5
+GIF_FPS = 24
 
 LOGGING = {
     "version": 1,
