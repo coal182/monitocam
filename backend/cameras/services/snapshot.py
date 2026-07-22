@@ -30,13 +30,12 @@ class SnapshotService:
 
         cmd = [
             "ffmpeg",
-            "-rtsp_transport", "tcp",
+            "-rtsp_transport", "udp",
             "-timeout", "3000000",
             "-i", rtsp_url,
             "-vf", "fps=1/2",
             "-q:v", "5",
             "-update", "1",
-            "-atomic_writing", "1",
             "-y",
             str(output_file),
         ]
