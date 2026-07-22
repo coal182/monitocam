@@ -49,8 +49,13 @@ class TestRecordingStatus:
             assert data["camera_id"] == 1
             assert data["is_recording"] is True
 
+    @pytest.mark.django_db
     def test_get_all_statuses(self):
+        from cameras.models import Camera
         from cameras.services.recording_status import get_all_statuses
+
+        Camera.objects.create(id=1, name="Test1", rtsp_url="rtsp://test1")
+        Camera.objects.create(id=2, name="Test2", rtsp_url="rtsp://test2")
 
         with patch("cameras.services.recording_status.cache") as mock_cache:
             mock_cache.get.side_effect = lambda key: "1" if key == "recording:1" else None

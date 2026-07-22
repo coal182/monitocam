@@ -106,7 +106,12 @@ class CameraViewSet(viewsets.ModelViewSet):
         subscribe_status(on_status_change)
 
         def event_stream():
-            yield f"data: {json.dumps(get_all_statuses())}\n\n"
+            raw_statuses = get_all_statuses()
+            snapshot = [
+                {"id": camera.id, "is_recording": raw_statuses.get(camera.id, False)}
+                for camera in Camera.objects.all()
+            ]
+            yield f"data: {json.dumps(snapshot)}\n\n"
             while True:
                 try:
                     data = q.get(timeout=30)

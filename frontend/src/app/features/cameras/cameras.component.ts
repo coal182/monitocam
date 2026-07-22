@@ -79,10 +79,22 @@ export class CamerasComponent implements OnInit, OnDestroy {
   }
 
   toggleRecording(camera: Camera): void {
-    const action = camera.status === 'recording'
+    const wasRecording = camera.status === 'recording';
+    const newStatus = wasRecording ? 'stopped' : 'recording';
+
+    this.cameras.update((cams) =>
+      cams.map((c) => (c.id === camera.id ? { ...c, status: newStatus } : c))
+    );
+
+    const action = wasRecording
       ? this.api.stopRecording(camera.id)
       : this.api.startRecording(camera.id);
 
-    action.catch(() => this.error.set('Error toggling recording'));
+    action.catch(() => {
+      this.error.set('Error toggling recording');
+      this.cameras.update((cams) =>
+        cams.map((c) => (c.id === camera.id ? { ...c, status: camera.status } : c))
+      );
+    });
   }
 }

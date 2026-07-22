@@ -68,23 +68,21 @@ def is_recording(camera_id: int) -> bool:
 
 
 def get_all_statuses() -> dict:
+    from cameras.models import Camera
+
     statuses = {}
-    for i in range(1, 100):
-        key = f"{RECORDING_KEY_PREFIX}{i}"
+    for camera in Camera.objects.all():
+        key = f"{RECORDING_KEY_PREFIX}{camera.id}"
         if cache.get(key) is not None:
-            statuses[i] = True
+            statuses[camera.id] = True
     return statuses
 
 
 def clear_all():
-    keys_to_delete = []
-    for i in range(1, 100):
-        key = f"{RECORDING_KEY_PREFIX}{i}"
-        if cache.get(key) is not None:
-            keys_to_delete.append(key)
+    from cameras.models import Camera
 
-    for key in keys_to_delete:
+    for camera in Camera.objects.all():
+        key = f"{RECORDING_KEY_PREFIX}{camera.id}"
         cache.delete(key)
 
-    if keys_to_delete:
-        logger.info(f"Cleared {len(keys_to_delete)} stale recording statuses from Redis")
+    logger.info("Cleared all recording statuses from Redis")
