@@ -67,6 +67,11 @@ export class ApiService {
     return `/api/recordings/${id}/download/`;
   }
 
+  getSnapshotUrl(cameraId: number, timestamp?: number): string {
+    const base = `/api/cameras/${cameraId}/snapshot/`;
+    return timestamp ? `${base}?t=${timestamp}` : base;
+  }
+
   login(username: string, password: string) {
     const body = new URLSearchParams();
     body.set('username', username);

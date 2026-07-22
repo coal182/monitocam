@@ -55,6 +55,15 @@
     <div class="empty">No recordings found</div>
   }
 
+  @if (selectedCamera !== null) {
+    <div class="live-view-section">
+      <app-live-view
+        [cameraId]="liveCameraId()!"
+        [isRecording]="liveIsRecording()"
+      />
+    </div>
+  }
+
   @if (gifs().length > 0) {
     <div class="gifs-grid">
       @for (gif of gifs(); track gif.id) {

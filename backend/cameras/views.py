@@ -1,7 +1,8 @@
 import json
+import os
 import queue
 
-from django.http import StreamingHttpResponse
+from django.http import FileResponse, StreamingHttpResponse
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -81,6 +82,19 @@ class CameraViewSet(viewsets.ModelViewSet):
         camera = self.get_object()
         stop_recording_task.delay(camera.id)
         return Response({"status": "stopped", "camera_id": camera.id})
+
+    @action(detail=True, methods=["get"], url_path="snapshot")
+    def snapshot(self, request, pk=None):
+        from cameras.services.snapshot import snapshot_service
+        camera = self.get_object()
+        path = snapshot_service.get_snapshot_path(camera.id)
+        if not os.path.exists(path):
+            return Response(
+                {"detail": "No snapshot available"}, status=404
+            )
+        return FileResponse(
+            open(path, "rb"), content_type="image/jpeg"
+        )
 
     @action(detail=False, methods=["get"], url_path="events")
     def events(self, request):

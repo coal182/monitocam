@@ -67,10 +67,10 @@ backend/
                 ┌────────────┼─────────────┐
                 │            │             │
           ┌─────▼─────┐ ┌───▼─────┐ ┌─────▼──────────┐
-          │ postgres   │ │  redis  │ │ celery-worker  │
-          │ (DB)       │ │(cache   │ │ (2 CPUs, 1GB)  │
-          └───────────┘ │ +broker) │ └────────────────┘
-                        │ +pub/sub │
+          │ postgres  │ │  redis  │ │ celery-worker  │
+          │ (DB)      │ │(cache   │ │ (2 CPUs, 1GB)  │
+          └───────────┘ │ +broker)│ └────────────────┘
+                        │ +pub/sub│
                         └─────────┘
                              ▲
                         ┌────┴────┐

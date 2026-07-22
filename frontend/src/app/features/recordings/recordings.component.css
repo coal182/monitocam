@@ -51,6 +51,11 @@ button:hover { background: #16213e; }
 
 .loading, .empty { text-align: center; color: #666; padding: 3rem; }
 
+.live-view-section {
+  margin-bottom: 1.5rem;
+  padding: 0;
+}
+
 .modal {
   position: fixed;
   top: 0; left: 0; right: 0; bottom: 0;

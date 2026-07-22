@@ -1,18 +1,21 @@
-import { Component, OnInit, OnDestroy, signal, inject } from '@angular/core';
+import { Component, OnInit, OnDestroy, signal, inject, computed } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ApiService } from '../../services/api.service';
+import { SseService } from '../../services/sse.service';
 import { Camera } from '../../models/camera.model';
 import { GifItem } from '../../models/recording.model';
+import { LiveViewComponent } from './live-view.component';
 
 @Component({
   selector: 'app-recordings',
   standalone: true,
-  imports: [FormsModule],
+  imports: [FormsModule, LiveViewComponent],
   templateUrl: './recordings.component.html',
   styleUrl: './recordings.component.css'
 })
 export class RecordingsComponent implements OnInit, OnDestroy {
   private api = inject(ApiService);
+  private sse = inject(SseService);
 
   gifs = signal<GifItem[]>([]);
   cameras = signal<Camera[]>([]);
@@ -22,10 +25,18 @@ export class RecordingsComponent implements OnInit, OnDestroy {
   autoRefresh = signal(true);
   private refreshInterval: ReturnType<typeof setInterval> | null = null;
 
+  liveCameraId = computed(() => this.selectedCamera);
+  liveIsRecording = computed(() =>
+    this.selectedCamera !== null
+      ? !!this.sse.statuses()[this.selectedCamera]
+      : false
+  );
+
   ngOnInit(): void {
     this.loadCameras();
     this.loadGifs();
     this.startAutoRefresh();
+    this.sse.connect();
   }
 
   ngOnDestroy(): void {

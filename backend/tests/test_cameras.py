@@ -1,4 +1,6 @@
 import os
+from unittest.mock import patch
+
 import pytest
 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "config.settings.dev")
@@ -109,3 +111,29 @@ class TestCameraRecording:
         assert response["Content-Type"] == "text/event-stream"
         assert response["Cache-Control"] == "no-cache"
         assert response["X-Accel-Buffering"] == "no"
+
+
+@patch("cameras.services.snapshot.snapshot_service")
+@pytest.mark.django_db
+class TestCameraSnapshot:
+    def test_snapshot_no_file(self, mock_snapshot, auth_client, camera):
+        mock_snapshot.get_snapshot_path.return_value = "/nonexistent/snapshot.jpg"
+        response = auth_client.get(f"/cameras/{camera.id}/snapshot/")
+        assert response.status_code == 404
+        assert response.json()["detail"] == "No snapshot available"
+
+    def test_snapshot_unauthorized(self, mock_snapshot, client, camera):
+        response = client.get(f"/cameras/{camera.id}/snapshot/")
+        assert response.status_code == 401
+
+    def test_snapshot_success(self, mock_snapshot, auth_client, camera, tmp_path):
+        snapshot_dir = tmp_path / f"camera_{camera.id}"
+        snapshot_dir.mkdir(parents=True, exist_ok=True)
+        snapshot_file = snapshot_dir / "snapshot.jpg"
+        snapshot_file.write_bytes(b"\xff\xd8\xff\xe0")
+
+        mock_snapshot.get_snapshot_path.return_value = str(snapshot_file)
+        response = auth_client.get(f"/cameras/{camera.id}/snapshot/")
+        assert response.status_code == 200
+        assert response["Content-Type"] == "image/jpeg"
+        assert b"".join(response.streaming_content) == b"\xff\xd8\xff\xe0"

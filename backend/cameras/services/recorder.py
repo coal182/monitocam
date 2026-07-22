@@ -56,6 +56,7 @@ class RecorderService:
             stderr_fd.close()
             self._processes[camera_id] = process
             redis_set_recording(camera_id, True)
+            self._start_snapshot(camera_id, rtsp_url)
             logger.info(f"Started recording camera {camera_id}: {output_file}")
             return True
         except Exception as e:
@@ -92,6 +93,7 @@ class RecorderService:
         finally:
             del self._processes[camera_id]
             self.get_ffmpeg_error(camera_id)
+            self._stop_snapshot(camera_id)
             redis_set_recording(camera_id, False)
             logger.info(f"Stopped recording camera {camera_id}")
         return True
@@ -99,6 +101,14 @@ class RecorderService:
     def is_recording(self, camera_id: int) -> bool:
         from cameras.services.recording_status import is_recording as redis_is_recording
         return redis_is_recording(camera_id)
+
+    def _start_snapshot(self, camera_id: int, rtsp_url: str):
+        from cameras.services.snapshot import snapshot_service
+        snapshot_service.start_snapshot(camera_id, rtsp_url)
+
+    def _stop_snapshot(self, camera_id: int):
+        from cameras.services.snapshot import snapshot_service
+        snapshot_service.stop_snapshot(camera_id)
 
     def stop_all(self):
         for camera_id in list(self._processes.keys()):
