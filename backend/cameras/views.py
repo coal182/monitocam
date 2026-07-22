@@ -5,7 +5,16 @@ import queue
 from django.http import FileResponse, StreamingHttpResponse
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
+from rest_framework.renderers import BaseRenderer, BrowsableAPIRenderer, JSONRenderer
 from rest_framework.response import Response
+
+
+class ServerSentEventRenderer(BaseRenderer):
+    media_type = 'text/event-stream'
+    format = 'sse'
+
+    def render(self, data, accepted_media_type=None, renderer_context=None):
+        return data
 
 from cameras.models import Camera
 from cameras.serializers import CameraSerializer, CameraCreateSerializer
@@ -96,7 +105,10 @@ class CameraViewSet(viewsets.ModelViewSet):
             open(path, "rb"), content_type="image/jpeg"
         )
 
-    @action(detail=False, methods=["get"], url_path="events")
+    @action(
+        detail=False, methods=["get"], url_path="events",
+        renderer_classes=[ServerSentEventRenderer, BrowsableAPIRenderer, JSONRenderer],
+    )
     def events(self, request):
         q = queue.Queue()
 
