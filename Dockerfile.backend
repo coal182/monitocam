@@ -15,7 +15,7 @@ COPY backend/ .
 
 RUN mkdir -p /var/lib/monitocam/recordings /var/lib/monitocam/staticfiles
 
-RUN useradd -m -u 1001 appuser && chown -R appuser:appuser /app /var/lib/monitocam
+RUN useradd -m -u 1000 appuser && chown -R appuser:appuser /app /var/lib/monitocam
 USER appuser
 
 EXPOSE 8585
