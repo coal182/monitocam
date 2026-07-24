@@ -103,6 +103,7 @@ services:
       - "80:80"
     volumes:
       - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
+      - /mnt/nas-pictures/monitocam:/var/lib/monitocam/recordings:ro
     depends_on:
       - api
     restart: unless-stopped

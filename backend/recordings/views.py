@@ -3,13 +3,20 @@ from pathlib import Path
 from datetime import datetime, timedelta
 
 from django.conf import settings
-from django.http import FileResponse, Http404
+from django.http import FileResponse, Http404, HttpResponse
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
+from rest_framework.pagination import PageNumberPagination
 from rest_framework.response import Response
 
 from recordings.models import Recording
 from recordings.serializers import RecordingSerializer
+
+
+class GifPagination(PageNumberPagination):
+    page_size = 20
+    page_size_query_param = "page_size"
+    max_page_size = 100
 
 
 class RecordingViewSet(viewsets.ModelViewSet):
@@ -76,12 +83,14 @@ class RecordingViewSet(viewsets.ModelViewSet):
             generate_gif_task.delay(recording.id)
             return Response({"status": "generating", "message": "GIF generation started"})
 
-        return FileResponse(
-            open(gif_path, "rb"),
-            content_type="image/gif",
-            as_attachment=False,
-            filename=gif_path.name,
-        )
+        try:
+            relative_path = str(gif_path.relative_to(settings.RECORDINGS_PATH))
+        except ValueError:
+            return FileResponse(open(gif_path, "rb"), content_type="image/gif")
+
+        response = HttpResponse(content_type="image/gif")
+        response["X-Accel-Redirect"] = f"/internal-gifs/{relative_path}"
+        return response
 
     @action(detail=False, methods=["get"], url_path="gifs/list")
     def gifs_list(self, request):
@@ -89,6 +98,11 @@ class RecordingViewSet(viewsets.ModelViewSet):
         camera_id = request.query_params.get("camera_id")
         if camera_id:
             qs = qs.filter(camera_id=camera_id)
+        paginator = GifPagination()
+        page = paginator.paginate_queryset(qs, request)
+        if page is not None:
+            serializer = RecordingSerializer(page, many=True)
+            return paginator.get_paginated_response(serializer.data)
         serializer = RecordingSerializer(qs, many=True)
         return Response(serializer.data)
 
@@ -106,12 +120,14 @@ class RecordingViewSet(viewsets.ModelViewSet):
             generate_gif_task.delay(recording.id)
             return Response({"status": "generating", "message": "GIF generation started"})
 
-        return FileResponse(
-            open(gif_path, "rb"),
-            content_type="image/gif",
-            as_attachment=False,
-            filename=gif_path.name,
-        )
+        try:
+            relative_path = str(gif_path.relative_to(settings.RECORDINGS_PATH))
+        except ValueError:
+            return FileResponse(open(gif_path, "rb"), content_type="image/gif")
+
+        response = HttpResponse(content_type="image/gif")
+        response["X-Accel-Redirect"] = f"/internal-gifs/{relative_path}"
+        return response
 
     @action(detail=False, methods=["delete"], url_path="cleanup/(?P<days>[0-9]+)")
     def cleanup(self, request, days=None):

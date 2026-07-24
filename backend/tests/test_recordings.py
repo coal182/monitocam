@@ -108,13 +108,25 @@ class TestGifEndpoints:
         response = auth_client.get("/recordings/gifs/list/")
         assert response.status_code == 200
         data = response.json()
-        assert all(r["has_gif"] for r in data)
+        assert "count" in data
+        assert "results" in data
+        assert all(r["has_gif"] for r in data["results"])
+
+    def test_gifs_list_pagination(self, auth_client, recordings):
+        response = auth_client.get("/recordings/gifs/list/?page=1&page_size=1")
+        assert response.status_code == 200
+        data = response.json()
+        assert data["count"] == 2
+        assert len(data["results"]) == 1
+        assert data["previous"] is None
+        assert data["next"] is not None
 
     def test_gifs_list_filter_camera(self, auth_client, recordings):
         camera_id = recordings[0].camera_id
         response = auth_client.get(f"/recordings/gifs/list/?camera_id={camera_id}")
         assert response.status_code == 200
-        assert all(r["camera"] == camera_id for r in response.json())
+        data = response.json()
+        assert all(r["camera"] == camera_id for r in data["results"])
 
     def test_get_gif_generating(self, auth_client, recording_no_gif):
         response = auth_client.get(f"/recordings/{recording_no_gif.id}/get_gif/")
