@@ -1,4 +1,4 @@
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { LiveViewComponent } from './live-view.component';
 import { ApiService } from '../../services/api.service';
@@ -16,33 +16,22 @@ describe('LiveViewComponent', () => {
     fixture = TestBed.createComponent(LiveViewComponent);
     component = fixture.componentInstance;
     component.cameraId = 1;
-    component.isRecording = false;
   });
 
   it('should create', () => {
     expect(component).toBeTruthy();
   });
 
-  it('should show not-recording state when isRecording is false', () => {
-    component.isRecording = false;
+  it('should start in live state', () => {
     fixture.detectChanges();
 
     const compiled = fixture.nativeElement as HTMLElement;
-    expect(compiled.querySelector('.live-view-placeholder')).toBeTruthy();
-    expect(compiled.querySelector('.placeholder-text')?.textContent).toContain('not recording');
+    expect(compiled.querySelector('.live-view-container')).toBeTruthy();
+    expect(compiled.querySelector('.live-badge')?.textContent).toContain('LIVE');
+    expect(compiled.querySelector('img')).toBeTruthy();
   });
 
-  it('should show loading state when isRecording is true', () => {
-    component.isRecording = true;
-    fixture.detectChanges();
-
-    const compiled = fixture.nativeElement as HTMLElement;
-    expect(compiled.querySelector('.live-view-loading')).toBeTruthy();
-    expect(compiled.querySelector('.loading-text')?.textContent).toContain('Loading');
-  });
-
-  it('should show live state and badge after image loads', () => {
-    component.isRecording = true;
+  it('should keep live state after image loads', () => {
     fixture.detectChanges();
 
     component.onLoad();
@@ -55,7 +44,6 @@ describe('LiveViewComponent', () => {
   });
 
   it('should show error state when image fails to load', () => {
-    component.isRecording = true;
     fixture.detectChanges();
 
     component.onError();
