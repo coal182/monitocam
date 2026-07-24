@@ -1,17 +1,12 @@
 import { Component, Input, OnDestroy, OnInit, inject, signal } from '@angular/core';
 import { ApiService } from '../../services/api.service';
 
-export type LiveViewState = 'loading' | 'live' | 'not-recording' | 'error';
+export type LiveViewState = 'loading' | 'live' | 'error';
 
 @Component({
   selector: 'app-live-view',
   standalone: true,
   template: `
-    @if (state() === 'not-recording') {
-      <div class="live-view-placeholder">
-        <span class="placeholder-text">Camera is not recording</span>
-      </div>
-    }
     @if (state() === 'loading') {
       <div class="live-view-loading">
         <span class="loading-text">Loading live view...</span>
@@ -50,7 +45,7 @@ export type LiveViewState = 'loading' | 'live' | 'not-recording' | 'error';
     .live-badge {
       position: absolute;
       top: 8px;
-      left: 8px;
+      right: 8px;
       background: #e94560;
       color: white;
       font-size: 0.7rem;
@@ -93,7 +88,6 @@ export class LiveViewComponent implements OnInit, OnDestroy {
   private api = inject(ApiService);
 
   @Input({ required: true }) cameraId!: number;
-  @Input() isRecording = false;
 
   state = signal<LiveViewState>('loading');
   snapshotUrl = signal<string>('');
@@ -108,26 +102,21 @@ export class LiveViewComponent implements OnInit, OnDestroy {
     this.stopRefresh();
   }
 
-  private updateState(): void {
-    if (!this.isRecording) {
-      this.state.set('not-recording');
-      this.stopRefresh();
-      return;
-    }
-    this.state.set('loading');
+  private updateState(): void { 
     this.refreshSnapshot();
     this.startRefresh();
   }
 
   private refreshSnapshot(): void {
+    this.state.set('loading');
     this.snapshotUrl.set(
       this.api.getSnapshotUrl(this.cameraId, Date.now())
     );
+    this.state.set('live');
   }
 
   private startRefresh(): void {
     this.stopRefresh();
-    if (!this.isRecording) return;
     this.refreshTimer = setInterval(() => this.refreshSnapshot(), 2000);
   }
 

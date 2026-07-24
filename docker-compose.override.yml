@@ -28,3 +28,7 @@ services:
       - TIME_ZONE=${TIME_ZONE:-Europe/Madrid}
     volumes:
       - ./backend:/app
+
+  nginx:
+    volumes:
+      - ./frontend/dist/monitocam/browser:/usr/share/nginx/html
