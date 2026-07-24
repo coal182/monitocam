@@ -19,6 +19,7 @@ if DATABASE_URL:
             "PASSWORD": url.password or "",
             "HOST": url.hostname or "postgres",
             "PORT": str(url.port or 5432),
+            "CONN_MAX_AGE": 30,
         }
     }
 else:

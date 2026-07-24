@@ -2,6 +2,7 @@ import json
 import os
 import queue
 
+from django.db import close_old_connections
 from django.http import FileResponse, StreamingHttpResponse
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
@@ -117,19 +118,23 @@ class CameraViewSet(viewsets.ModelViewSet):
 
         subscribe_status(on_status_change)
 
+        raw_statuses = get_all_statuses()
+        snapshot = [
+            {"id": camera.id, "is_recording": raw_statuses.get(camera.id, False)}
+            for camera in Camera.objects.all()
+        ]
+        initial_data = json.dumps(snapshot)
+
         def event_stream():
-            raw_statuses = get_all_statuses()
-            snapshot = [
-                {"id": camera.id, "is_recording": raw_statuses.get(camera.id, False)}
-                for camera in Camera.objects.all()
-            ]
-            yield f"data: {json.dumps(snapshot)}\n\n"
+            yield f"data: {initial_data}\n\n"
             while True:
                 try:
                     data = q.get(timeout=30)
                     yield f"data: {json.dumps(data)}\n\n"
                 except queue.Empty:
                     yield ": keepalive\n\n"
+                finally:
+                    close_old_connections()
 
         response = StreamingHttpResponse(
             event_stream(),
