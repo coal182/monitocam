@@ -60,6 +60,7 @@ cd frontend && npx ng test --watch=false --browsers=ChromeHeadless
 - **UID 1001** in Dockerfile matches host user for volume permissions
 - **Python imports inside functions** — Django convention for avoiding circular imports
 - **Underscore prefix** for private helper functions (`_get_and_validate_camera`, etc.)
+- **After each frontend feature/fix**: run `cd frontend && npm run build` to confirm production build succeeds, then `docker restart monitocam-nginx-1` to serve the new assets
 
 ## Testing Conventions
 
