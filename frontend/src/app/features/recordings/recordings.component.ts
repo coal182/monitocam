@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, signal, inject, computed } from '@angular/core';
+import { Component, OnInit, signal, inject, computed } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ApiService } from '../../services/api.service';
 import { SseService } from '../../services/sse.service';
@@ -13,50 +13,80 @@ import { LiveViewComponent } from './live-view.component';
   templateUrl: './recordings.component.html',
   styleUrl: './recordings.component.css'
 })
-export class RecordingsComponent implements OnInit, OnDestroy {
+export class RecordingsComponent implements OnInit {
   private api = inject(ApiService);
   private sse = inject(SseService);
 
   gifs = signal<GifItem[]>([]);
   cameras = signal<Camera[]>([]);
   loading = signal(false);
-  selectedCamera: number | null = null;
+  selectedCamera = signal<number | null>(null);
   selectedGif = signal<GifItem | null>(null);
-  autoRefresh = signal(true);
-  private refreshInterval: ReturnType<typeof setInterval> | null = null;
+  currentPage = signal(1);
+  totalCount = signal(0);
+  pageSize = 10;
+  totalPages = computed(() => Math.max(1, Math.ceil(this.totalCount() / this.pageSize)));
+  private pendingPage = 0;
 
-  liveCameraId = computed(() => this.selectedCamera);
-  liveIsRecording = computed(() =>
-    this.selectedCamera !== null
-      ? !!this.sse.statuses()[this.selectedCamera]
-      : false
-  );
+  liveCameraId = computed(() => this.selectedCamera());
+  liveIsRecording = computed(() => {
+    const camId = this.selectedCamera();
+    return camId !== null
+      ? !!this.sse.statuses()[camId]
+      : false;
+  });
 
   ngOnInit(): void {
     this.loadCameras();
     this.loadGifs();
-    this.startAutoRefresh();
     this.sse.connect();
   }
 
-  ngOnDestroy(): void {
-    this.stopAutoRefresh();
-  }
-
-  loadGifs(): void {
+  loadGifs(resetPage = false): void {
+    if (resetPage) {
+      this.currentPage.set(1);
+    }
+    this.gifs.set([]);
     this.loading.set(true);
-    const params = this.selectedCamera ? { camera_id: this.selectedCamera } : undefined;
+    const page = this.currentPage();
+    this.pendingPage = page;
+    const params: { camera_id?: number; page?: number; page_size?: number } = {
+      page: page,
+      page_size: this.pageSize,
+    };
+    const camId = this.selectedCamera();
+    if (camId) {
+      params.camera_id = camId;
+    }
     this.api.getGifs(params)
       .then(data => {
-        this.gifs.set(data);
+        if (this.pendingPage !== page) return;
+        if (Array.isArray(data)) {
+          this.gifs.set(data);
+          this.totalCount.set(data.length);
+        } else {
+          this.gifs.set(data.results ?? []);
+          this.totalCount.set(data.count ?? 0);
+        }
         this.loading.set(false);
       })
       .catch(() => this.loading.set(false));
   }
 
+  onCameraChange(cameraId: number | null): void {
+    this.selectedCamera.set(cameraId);
+    this.loadGifs(true);
+  }
+
   loadCameras(): void {
     this.api.getCameras()
-      .then(data => this.cameras.set(data));
+      .then(data => {
+        this.cameras.set(data);
+        if (data.length >= 1) {
+          this.selectedCamera.set(data[0].id);
+          this.loadGifs(true);
+        }
+      });
   }
 
   deleteGif(gif: GifItem, event: Event): void {
@@ -64,6 +94,20 @@ export class RecordingsComponent implements OnInit, OnDestroy {
     if (!confirm(`Eliminar grabación ${gif.filename}?`)) return;
     this.api.deleteRecording(gif.id)
       .then(() => this.loadGifs());
+  }
+
+  nextPage(): void {
+    if (this.currentPage() < this.totalPages()) {
+      this.currentPage.update(p => p + 1);
+      this.loadGifs();
+    }
+  }
+
+  prevPage(): void {
+    if (this.currentPage() > 1) {
+      this.currentPage.update(p => p - 1);
+      this.loadGifs();
+    }
   }
 
   cleanupOldRecordings(): void {
@@ -119,24 +163,5 @@ export class RecordingsComponent implements OnInit, OnDestroy {
     this.selectedGif.set(null);
   }
 
-  toggleAutoRefresh(): void {
-    this.autoRefresh.set(!this.autoRefresh());
-    if (this.autoRefresh()) {
-      this.startAutoRefresh();
-    } else {
-      this.stopAutoRefresh();
-    }
-  }
 
-  startAutoRefresh(): void {
-    if (this.refreshInterval) return;
-    this.refreshInterval = setInterval(() => this.loadGifs(), 10000);
-  }
-
-  stopAutoRefresh(): void {
-    if (this.refreshInterval) {
-      clearInterval(this.refreshInterval);
-      this.refreshInterval = null;
-    }
-  }
 }

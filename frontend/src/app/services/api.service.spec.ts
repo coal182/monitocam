@@ -2,7 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { ApiService } from './api.service';
 import { Camera } from '../models/camera.model';
-import { GifItem } from '../models/recording.model';
+import { GifItem, PaginatedResponse } from '../models/recording.model';
 
 describe('ApiService', () => {
   let service: ApiService;
@@ -109,19 +109,42 @@ describe('ApiService', () => {
       await promise;
     });
 
-    it('should get gifs', async () => {
-      const mockGifs: GifItem[] = [
-        { id: '1', camera_id: 1, camera_name: 'Test', filename: 'test.gif', path: '/test', timestamp: '2024-01-01', size: 1000 }
-      ];
+    it('should get gifs paginated', async () => {
+      const mockResponse: PaginatedResponse<GifItem> = {
+        count: 1,
+        next: null,
+        previous: null,
+        results: [
+          { id: '1', camera_id: 1, camera_name: 'Test', filename: 'test.gif', path: '/test', timestamp: '2024-01-01', size: 1000 }
+        ]
+      };
 
       const promise = service.getGifs();
 
       const req = httpMock.expectOne('/api/recordings/gifs/list/');
       expect(req.request.method).toBe('GET');
-      req.flush(mockGifs);
+      req.flush(mockResponse);
 
-      const gifs = await promise;
-      expect(gifs).toEqual(mockGifs);
+      const result = await promise;
+      expect(result).toEqual(mockResponse);
+    });
+
+    it('should get gifs with page param', async () => {
+      const mockResponse: PaginatedResponse<GifItem> = {
+        count: 3,
+        next: '/api/recordings/gifs/list/?page=2',
+        previous: null,
+        results: []
+      };
+
+      const promise = service.getGifs({ page: 1, page_size: 2 });
+
+      const req = httpMock.expectOne('/api/recordings/gifs/list/?page=1&page_size=2');
+      expect(req.request.method).toBe('GET');
+      req.flush(mockResponse);
+
+      const result = await promise;
+      expect(result.count).toBe(3);
     });
 
     it('should delete recording', async () => {

@@ -2,7 +2,7 @@ import { Injectable, signal, computed, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
 import { Camera, CameraCreate } from '../models/camera.model';
-import { GifItem, Recording } from '../models/recording.model';
+import { GifItem, PaginatedResponse, Recording } from '../models/recording.model';
 
 @Injectable({ providedIn: 'root' })
 export class ApiService {
@@ -42,13 +42,19 @@ export class ApiService {
     return firstValueFrom(this.http.get<Recording[]>(url));
   }
 
-  getGifs(params?: { camera_id?: number }) {
+  getGifs(params?: { camera_id?: number; page?: number; page_size?: number }) {
     const searchParams = new URLSearchParams();
     if (params?.camera_id) {
       searchParams.set('camera_id', params.camera_id.toString());
     }
+    if (params?.page) {
+      searchParams.set('page', params.page.toString());
+    }
+    if (params?.page_size) {
+      searchParams.set('page_size', params.page_size.toString());
+    }
     const url = `${this.baseUrl}/recordings/gifs/list/${searchParams.toString() ? '?' + searchParams : ''}`;
-    return firstValueFrom(this.http.get<GifItem[]>(url));
+    return firstValueFrom(this.http.get<PaginatedResponse<GifItem>>(url));
   }
 
   deleteRecording(id: string) {

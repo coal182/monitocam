@@ -1,7 +1,7 @@
 <div class="cameras-page">
   <div class="header">
     <h1>Camaras</h1>
-    <button (click)="showAddForm.set(true)">+ Anadir Camara</button>
+    <button (click)="showAddForm.set(true)" class="btn-add">+ Anadir Camara</button>
   </div>
 
   @if (error()) {
@@ -53,10 +53,10 @@
             <p><strong>ID:</strong> {{ camera.id }}</p>
           </div>
           <div class="camera-actions">
-            <button (click)="toggleRecording(camera)">
+            <button (click)="toggleRecording(camera)" [class.btn-rec]="camera.status !== 'recording'" [class.btn-stop]="camera.status === 'recording'">
               {{ camera.status === 'recording' ? 'Parar' : 'Grabar' }}
             </button>
-            <button (click)="deleteCamera(camera.id)" class="danger">Eliminar</button>
+            <button (click)="deleteCamera(camera.id)" class="btn-delete">Eliminar</button>
           </div>
         </div>
       }

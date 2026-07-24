@@ -12,12 +12,16 @@ export const routes: Routes = [
   },
   {
     path: '',
-    component: CamerasComponent,
+    component: RecordingsComponent,
     canActivate: [authGuard]
   },
   {
     path: 'recordings',
-    component: RecordingsComponent,
+    redirectTo: ''
+  },
+  {
+    path: 'cameras',
+    component: CamerasComponent,
     canActivate: [authGuard]
   },
   {

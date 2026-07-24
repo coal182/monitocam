@@ -3,22 +3,54 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+  background: var(--bg-page);
+  position: relative;
+}
+.login-container::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(255, 255, 255, 0.015) 2px,
+    rgba(255, 255, 255, 0.015) 4px
+  );
+  pointer-events: none;
+  z-index: 1;
 }
 
 .login-card {
-  background: white;
-  padding: 2rem;
-  border-radius: 8px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+  position: relative;
+  z-index: 2;
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  padding: 2rem 2.5rem;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-elevated);
   width: 100%;
-  max-width: 400px;
+  max-width: 380px;
 }
 
-h1 {
+.login-card h1 {
+  font-family: var(--font-mono);
+  font-size: 1.25rem;
+  font-weight: 700;
   text-align: center;
-  color: #1a1a2e;
-  margin-bottom: 2rem;
+  color: var(--accent);
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  margin-bottom: 0.25rem;
+}
+
+.login-subtitle {
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  text-align: center;
+  color: var(--text-muted);
+  letter-spacing: 0.08em;
+  margin-bottom: 1.75rem;
 }
 
 .form-group {
@@ -27,46 +59,64 @@ h1 {
 
 label {
   display: block;
-  margin-bottom: 0.5rem;
-  color: #333;
+  margin-bottom: 0.35rem;
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
 }
 
 input {
   width: 100%;
-  padding: 0.75rem;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  font-size: 1rem;
+  padding: 0.625rem 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--bg-page);
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  font-size: 0.85rem;
+  transition: border-color 0.15s;
 }
-
 input:focus {
   outline: none;
-  border-color: #1a1a2e;
+  border-color: var(--accent);
+}
+input::placeholder {
+  color: var(--text-muted);
 }
 
 button {
   width: 100%;
-  padding: 0.75rem;
-  background: #1a1a2e;
-  color: white;
+  padding: 0.625rem;
+  background: var(--accent);
+  color: var(--bg-page);
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  font-weight: 600;
   border: none;
-  border-radius: 4px;
-  font-size: 1rem;
+  border-radius: var(--radius-sm);
   cursor: pointer;
-  margin-top: 1rem;
+  margin-top: 0.75rem;
+  letter-spacing: 0.06em;
+  transition: background 0.15s;
 }
-
 button:hover:not(:disabled) {
-  background: #16213e;
+  background: var(--accent-dim);
 }
-
 button:disabled {
-  opacity: 0.6;
+  opacity: 0.4;
   cursor: not-allowed;
 }
 
 .error {
-  color: #e94560;
-  margin-top: 1rem;
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: var(--alert);
+  margin-top: 0.75rem;
   text-align: center;
+  background: rgba(255, 41, 87, 0.08);
+  border: 1px solid rgba(255, 41, 87, 0.2);
+  padding: 0.5rem 0.75rem;
+  border-radius: var(--radius-sm);
 }

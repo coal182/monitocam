@@ -4,16 +4,13 @@
     <div class="header-actions">
       <button (click)="cleanupOldRecordings()" class="btn-cleanup">Clean up</button>
       <button (click)="loadGifs()" class="btn-refresh">Refresh</button>
-      <button (click)="toggleAutoRefresh()" [class.btn-auto]="true" [class.active]="autoRefresh()">
-        {{ autoRefresh() ? 'Auto ON' : 'Auto OFF' }}
-      </button>
     </div>
   </div>
 
   <div class="filters">
     <div class="filter-group">
       <label>Camera</label>
-      <select [(ngModel)]="selectedCamera" (change)="loadGifs()">
+      <select [ngModel]="selectedCamera()" (ngModelChange)="onCameraChange($event)">
         <option [ngValue]="null">All</option>
         @for (cam of cameras(); track cam.id) {
           <option [ngValue]="cam.id">{{ cam.name }}</option>
@@ -21,12 +18,23 @@
       </select>
     </div>
     <div class="filter-group">
-      <span class="count">{{ gifs().length }} recordings</span>
+      <span class="count">{{ totalCount() }} recordings</span>
     </div>
   </div>
 
   @if (loading() && gifs().length === 0) {
-    <div class="loading">Loading...</div>
+    <div class="skeleton-grid">
+      @for (_ of [].constructor(pageSize); track $index) {
+        <div class="skeleton-card">
+          <div class="skeleton-preview"></div>
+          <div class="skeleton-info">
+            <div class="skeleton-line"></div>
+            <div class="skeleton-line short"></div>
+            <div class="skeleton-line"></div>
+          </div>
+        </div>
+      }
+    </div>
   }
 
   @if (selectedGif()) {
@@ -55,20 +63,30 @@
     <div class="empty">No recordings found</div>
   }
 
-  @if (selectedCamera !== null) {
+  @if (selectedCamera(); as camId) {
     <div class="live-view-section">
       <app-live-view
-        [cameraId]="liveCameraId()!"
+        [cameraId]="camId"
       />
     </div>
   }
 
   @if (gifs().length > 0) {
+    <div class="pagination">
+      <button class="btn-pagination" (click)="prevPage()" [disabled]="currentPage() <= 1">
+        « Anterior
+      </button>
+      <span class="page-info">Página {{ currentPage() }} de {{ totalPages() }}</span>
+      <button class="btn-pagination" (click)="nextPage()" [disabled]="currentPage() >= totalPages()">
+        Siguiente »
+      </button>
+    </div>
     <div class="gifs-grid">
       @for (gif of gifs(); track gif.id) {
         <div class="gif-card" (click)="openVideo(gif)">
           <div class="gif-preview">
             <img [src]="getGifUrl(gif.id)" [alt]="gif.filename" loading="lazy" />
+            <div class="gif-scanlines"></div>
             <div class="gif-overlay">
               <span class="play-icon">▶</span>
             </div>
