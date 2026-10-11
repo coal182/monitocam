@@ -93,6 +93,26 @@ class CameraViewSet(viewsets.ModelViewSet):
         stop_recording_task.delay(camera.id)
         return Response({"status": "stopped", "camera_id": camera.id})
 
+    @action(detail=True, methods=["get"], url_path="errors")
+    def errors(self, request, pk=None):
+        from recordings.models import Recording
+
+        camera = self.get_object()
+        failed_recordings = (
+            Recording.objects.filter(camera=camera, status=Recording.STATUS_FAILED)
+            .order_by("-created_at")[:10]
+        )
+        data = [
+            {
+                "id": r.id,
+                "filename": r.filename,
+                "error_message": r.error_message,
+                "created_at": r.created_at.isoformat() if r.created_at else None,
+            }
+            for r in failed_recordings
+        ]
+        return Response(data)
+
     @action(detail=True, methods=["get"], url_path="snapshot")
     def snapshot(self, request, pk=None):
         from cameras.services.snapshot import snapshot_service

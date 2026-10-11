@@ -2,7 +2,7 @@ import { Injectable, signal, computed, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
 import { Camera, CameraCreate } from '../models/camera.model';
-import { GifItem, PaginatedResponse, Recording } from '../models/recording.model';
+import { GifItem, PaginatedResponse, Recording, RecordingError } from '../models/recording.model';
 
 @Injectable({ providedIn: 'root' })
 export class ApiService {
@@ -27,6 +27,10 @@ export class ApiService {
 
   stopRecording(id: number) {
     return firstValueFrom(this.http.post<void>(`${this.baseUrl}/cameras/${id}/stop/`, {}));
+  }
+
+  getCameraErrors(id: number) {
+    return firstValueFrom(this.http.get<RecordingError[]>(`${this.baseUrl}/cameras/${id}/errors/`));
   }
 
   getRecordings(params?: { camera_id?: number; date?: string; page?: number; page_size?: number }) {

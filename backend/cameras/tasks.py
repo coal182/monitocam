@@ -37,20 +37,21 @@ def _create_recording(camera):
         camera=camera,
         filename=filename,
         path=str(output_file),
+        status=Recording.STATUS_RUNNING,
         start_time=timezone.now(),
     )
     logger.info(f"Created Recording record for camera {camera.id}: {filename}")
     return recording
 
 
-def _wait_for_ffmpeg(camera_id: int) -> int:
+def _wait_for_ffmpeg(camera_id: int) -> tuple[int, str]:
     from cameras.services.recorder import recorder_service
     from cameras.services.recording_status import set_recording
     from django.conf import settings
 
     process = recorder_service._processes.get(camera_id)
     if not process:
-        return -1
+        return -1, "ffmpeg process not found"
 
     logger.info(f"Waiting for ffmpeg to finish for camera {camera_id} (timeout={settings.FRAGMENT_DURATION + 300}s)...")
     try:
@@ -72,10 +73,10 @@ def _wait_for_ffmpeg(camera_id: int) -> int:
     recorder_service._processes.pop(camera_id, None)
     set_recording(camera_id, False)
 
-    return returncode
+    return returncode, stderr_output or ""
 
 
-def _finalize_recording(recording, returncode: int):
+def _finalize_recording(recording, returncode: int, error_message: str = ""):
     from django.conf import settings
     from pathlib import Path
 
@@ -87,12 +88,19 @@ def _finalize_recording(recording, returncode: int):
             recording.size = file_path.stat().st_size
             recording.end_time = timezone.now()
             recording.duration = int((recording.end_time - recording.start_time).total_seconds())
+            recording.status = recording.STATUS_COMPLETED
             recording.save()
 
             _generate_gif(recording)
         elif returncode != 0:
-            recording.delete()
-            logger.info(f"Deleted failed recording {recording.id} (no file)")
+            recording.refresh_from_db()
+            recording.status = recording.STATUS_FAILED
+            recording.error_message = error_message[-500:] if error_message else "Unknown error"
+            recording.end_time = timezone.now()
+            if recording.start_time:
+                recording.duration = int((recording.end_time - recording.start_time).total_seconds())
+            recording.save()
+            logger.info(f"Marked recording {recording.id} as failed for camera {recording.camera_id}")
         else:
             logger.warning(f"Video file missing for recording {recording.id}: {recording.path}")
     except Exception as e:
@@ -158,8 +166,8 @@ def start_recording_task(camera_id: int):
         return False
 
     recording = _create_recording(camera)
-    returncode = _wait_for_ffmpeg(camera_id)
-    _finalize_recording(recording, returncode)
+    returncode, error_message = _wait_for_ffmpeg(camera_id)
+    _finalize_recording(recording, returncode, error_message)
     _chain_next_recording(camera_id, returncode)
 
     return True

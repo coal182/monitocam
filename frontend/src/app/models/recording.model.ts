@@ -26,3 +26,10 @@ export interface PaginatedResponse<T> {
   previous: string | null;
   results: T[];
 }
+
+export interface RecordingError {
+  id: number;
+  filename: string;
+  error_message: string;
+  created_at: string | null;
+}

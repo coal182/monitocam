@@ -68,10 +68,13 @@ class TestFinalizeRecording:
         from cameras.tasks import _finalize_recording
         from recordings.models import Recording
 
-        recording_id = recording.id
-        _finalize_recording(recording, 1)
+        _finalize_recording(recording, 1, "Connection refused")
 
-        assert not Recording.objects.filter(id=recording_id).exists()
+        recording.refresh_from_db()
+        assert recording.status == Recording.STATUS_FAILED
+        assert recording.error_message == "Connection refused"
+        assert recording.end_time is not None
+        assert recording.duration is not None
 
 
 @pytest.mark.django_db

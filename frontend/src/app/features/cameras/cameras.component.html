@@ -1,7 +1,7 @@
 <div class="cameras-page">
   <div class="header">
-    <h1>Camaras</h1>
-    <button (click)="showAddForm.set(true)" class="btn-add">+ Anadir Camara</button>
+    <h1>Cameras</h1>
+    <button (click)="showAddForm.set(true)" class="btn-add">+ Add Camera</button>
   </div>
 
   @if (error()) {
@@ -11,10 +11,10 @@
   @if (showAddForm()) {
     <div class="modal">
       <div class="modal-content">
-        <h2>Nueva Camara</h2>
+        <h2>New Camera</h2>
         <form (ngSubmit)="addCamera()">
           <div class="form-group">
-            <label>Nombre</label>
+            <label>Name</label>
             <input [(ngModel)]="newCamera.name" name="name" required />
           </div>
           <div class="form-group">
@@ -24,12 +24,12 @@
           <div class="form-group checkbox">
             <label>
               <input type="checkbox" [(ngModel)]="newCamera.enabled" name="enabled" />
-              Habilitada
+              Enabled
             </label>
           </div>
           <div class="modal-actions">
-            <button type="button" (click)="showAddForm.set(false)">Cancelar</button>
-            <button type="submit">Guardar</button>
+            <button type="button" (click)="showAddForm.set(false)">Cancel</button>
+            <button type="submit">Save</button>
           </div>
         </form>
       </div>
@@ -37,7 +37,7 @@
   }
 
   @if (loading()) {
-    <div class="loading">Cargando...</div>
+    <div class="loading">Loading...</div>
   }
 
   @if (!loading()) {
@@ -54,9 +54,36 @@
           </div>
           <div class="camera-actions">
             <button (click)="toggleRecording(camera)" [class.btn-rec]="camera.status !== 'recording'" [class.btn-stop]="camera.status === 'recording'">
-              {{ camera.status === 'recording' ? 'Parar' : 'Grabar' }}
+              {{ camera.status === 'recording' ? 'Stop' : 'Record' }}
             </button>
-            <button (click)="deleteCamera(camera.id)" class="btn-delete">Eliminar</button>
+            <button (click)="deleteCamera(camera.id)" class="btn-delete">Delete</button>
+          </div>
+          <div class="errors-accordion">
+            <button class="errors-toggle" (click)="toggleErrors(camera.id)">
+              <span>Errors</span>
+              <span [class]="'accordion-arrow' + (expandedCamera() === camera.id ? ' open' : '')">&#9662;</span>
+            </button>
+            @if (expandedCamera() === camera.id) {
+              <div class="errors-panel">
+                @if (loadingErrors()) {
+                  <div class="errors-loading">Loading...</div>
+                } @else {
+                  @if (getErrors(camera.id).length === 0) {
+                    <div class="errors-empty">No errors recorded</div>
+                  } @else {
+                    @for (err of getErrors(camera.id); track err.id) {
+                      <div class="error-row">
+                        <div class="error-header">
+                          <span class="error-filename">{{ err.filename }}</span>
+                          <span class="error-time">{{ formatErrorTime(err.created_at) }}</span>
+                        </div>
+                        <div class="error-message">{{ err.error_message }}</div>
+                      </div>
+                    }
+                  }
+                }
+              </div>
+            }
           </div>
         </div>
       }
@@ -65,7 +92,7 @@
 
   @if (!loading() && cameras().length === 0) {
     <div class="empty">
-      No hay camaras configuradas
+      No cameras configured
     </div>
   }
 </div>

@@ -16,6 +16,8 @@ class RecordingSerializer(serializers.ModelSerializer):
             "camera_name",
             "filename",
             "path",
+            "status",
+            "error_message",
             "start_time",
             "end_time",
             "duration",

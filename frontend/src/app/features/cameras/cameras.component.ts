@@ -3,6 +3,7 @@ import { FormsModule } from '@angular/forms';
 import { ApiService } from '../../services/api.service';
 import { SseService } from '../../services/sse.service';
 import { Camera, CameraCreate } from '../../models/camera.model';
+import { RecordingError } from '../../models/recording.model';
 
 @Component({
   selector: 'app-cameras',
@@ -21,6 +22,10 @@ export class CamerasComponent implements OnInit, OnDestroy {
   newCamera: CameraCreate = { name: '', rtsp_url: '', enabled: true };
   error = signal('');
   private unsubSse: (() => void) | null = null;
+
+  expandedCamera = signal<number | null>(null);
+  cameraErrors = signal<Record<number, RecordingError[]>>({});
+  loadingErrors = signal(false);
 
   ngOnInit(): void {
     this.loadCameras();
@@ -96,5 +101,37 @@ export class CamerasComponent implements OnInit, OnDestroy {
         cams.map((c) => (c.id === camera.id ? { ...c, status: camera.status } : c))
       );
     });
+  }
+
+  toggleErrors(cameraId: number): void {
+    if (this.expandedCamera() === cameraId) {
+      this.expandedCamera.set(null);
+      return;
+    }
+
+    this.expandedCamera.set(cameraId);
+
+    if (!this.cameraErrors()[cameraId]) {
+      this.loadingErrors.set(true);
+      this.api.getCameraErrors(cameraId)
+        .then(errors => {
+          this.cameraErrors.update(prev => ({ ...prev, [cameraId]: errors }));
+          this.loadingErrors.set(false);
+        })
+        .catch(() => {
+          this.cameraErrors.update(prev => ({ ...prev, [cameraId]: [] }));
+          this.loadingErrors.set(false);
+        });
+    }
+  }
+
+  getErrors(cameraId: number): RecordingError[] {
+    return this.cameraErrors()[cameraId] || [];
+  }
+
+  formatErrorTime(isoString: string | null): string {
+    if (!isoString) return '';
+    const date = new Date(isoString);
+    return date.toLocaleString();
   }
 }

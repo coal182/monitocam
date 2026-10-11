@@ -88,6 +88,7 @@ def recording(camera, tmp_path):
         camera=camera,
         filename="TestCamera_2026-06-10_12-00.mp4",
         path=str(file),
+        status=Recording.STATUS_COMPLETED,
         start_time=timezone.now(),
     )
 
@@ -100,6 +101,21 @@ def recording_no_file(camera):
         camera=camera,
         filename="TestCamera_2026-06-10_12-00.mp4",
         path="/tmp/nonexistent/test.mp4",
+        status=Recording.STATUS_COMPLETED,
+        start_time=timezone.now(),
+    )
+
+
+@pytest.fixture
+def failed_recording(camera):
+    from recordings.models import Recording
+
+    return Recording.objects.create(
+        camera=camera,
+        filename="TestCamera_2026-06-10_12-00.mp4",
+        path="/tmp/nonexistent/test.mp4",
+        status=Recording.STATUS_FAILED,
+        error_message="Connection refused",
         start_time=timezone.now(),
     )
 

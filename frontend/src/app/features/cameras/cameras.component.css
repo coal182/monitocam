@@ -252,3 +252,86 @@ h1 {
   padding: 3rem;
   font-size: 0.85rem;
 }
+
+.errors-accordion {
+  margin-top: 0.75rem;
+  border-top: 1px solid var(--border);
+  padding-top: 0.5rem;
+}
+
+.errors-toggle {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  cursor: pointer;
+  padding: 0.35rem 0;
+}
+.errors-toggle:hover {
+  color: var(--alert);
+}
+
+.accordion-arrow {
+  font-size: 0.65rem;
+  transition: transform 0.2s;
+}
+.accordion-arrow.open {
+  transform: rotate(180deg);
+}
+
+.errors-panel {
+  margin-top: 0.5rem;
+}
+
+.errors-loading, .errors-empty {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  padding: 0.5rem 0;
+}
+
+.error-row {
+  background: rgba(255, 41, 87, 0.06);
+  border: 1px solid rgba(255, 41, 87, 0.15);
+  border-radius: var(--radius-sm);
+  padding: 0.625rem 0.75rem;
+  margin-bottom: 0.375rem;
+}
+
+.error-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.35rem;
+}
+
+.error-filename {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.error-time {
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  color: var(--text-muted);
+}
+
+.error-message {
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  color: var(--alert);
+  word-break: break-all;
+  white-space: pre-wrap;
+  max-height: 4rem;
+  overflow-y: auto;
+}

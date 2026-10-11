@@ -113,6 +113,45 @@ class TestCameraRecording:
         assert response["X-Accel-Buffering"] == "no"
 
 
+@pytest.mark.django_db
+class TestCameraErrors:
+    def test_errors_empty(self, auth_client, camera):
+        response = auth_client.get(f"/cameras/{camera.id}/errors/")
+        assert response.status_code == 200
+        assert response.json() == []
+
+    def test_errors_returns_failed_recordings(self, auth_client, camera, failed_recording):
+        response = auth_client.get(f"/cameras/{camera.id}/errors/")
+        assert response.status_code == 200
+        data = response.json()
+        assert len(data) == 1
+        assert data[0]["id"] == failed_recording.id
+        assert data[0]["error_message"] == "Connection refused"
+        assert data[0]["filename"] == failed_recording.filename
+
+    def test_errors_excludes_completed(self, auth_client, camera, recording):
+        response = auth_client.get(f"/cameras/{camera.id}/errors/")
+        assert response.status_code == 200
+        assert len(response.json()) == 0
+
+    def test_errors_limited_to_10(self, auth_client, camera):
+        from recordings.models import Recording
+        from django.utils import timezone
+
+        for i in range(15):
+            Recording.objects.create(
+                camera=camera,
+                filename=f"fail_{i}.mp4",
+                path=f"/tmp/fail_{i}.mp4",
+                status=Recording.STATUS_FAILED,
+                error_message=f"Error {i}",
+                start_time=timezone.now(),
+            )
+        response = auth_client.get(f"/cameras/{camera.id}/errors/")
+        assert response.status_code == 200
+        assert len(response.json()) == 10
+
+
 @patch("cameras.services.snapshot.snapshot_service")
 @pytest.mark.django_db
 class TestCameraSnapshot:
