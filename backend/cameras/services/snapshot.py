@@ -19,7 +19,7 @@ class SnapshotService:
 
     def start_snapshot(self, camera_id: int, rtsp_url: str) -> bool:
         with self._lock:
-            if camera_id in self._processes:
+            if self._running.get(camera_id, False):
                 logger.warning(f"Snapshot already running for camera {camera_id}")
                 return False
             self._running[camera_id] = True
