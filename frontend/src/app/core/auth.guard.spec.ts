@@ -1,37 +1,58 @@
 import { TestBed } from '@angular/core/testing';
-import { Router } from '@angular/router';
+import { Router, UrlTree } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
+import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
+import { authGuard, publicGuard } from './auth.guard';
 import { AuthService } from './auth.service';
 
 describe('AuthGuard', () => {
-  let router: Router;
-  let authService: AuthService;
+  let httpMock: HttpTestingController;
 
   beforeEach(() => {
-    localStorage.clear();
     TestBed.configureTestingModule({
-      imports: [RouterTestingModule],
+      imports: [RouterTestingModule, HttpClientTestingModule],
       providers: [AuthService]
     });
-    router = TestBed.inject(Router);
-    authService = TestBed.inject(AuthService);
+    httpMock = TestBed.inject(HttpTestingController);
   });
 
   afterEach(() => {
-    localStorage.clear();
+    httpMock.verify();
   });
 
-  describe('AuthService basic', () => {
-    it('should be created', () => {
-      expect(authService).toBeTruthy();
-    });
+  function run(guard: typeof authGuard): Promise<boolean | UrlTree> {
+    return TestBed.runInInjectionContext(
+      () => guard({} as never, {} as never) as Promise<boolean | UrlTree>
+    );
+  }
 
-    it('should return false for isAuthenticated when not logged in', () => {
-      expect(authService.isAuthenticated()).toBeFalse();
-    });
+  it('allows navigation when a session exists', async () => {
+    const result = run(authGuard);
+    httpMock.expectOne('/api/auth/me/').flush({ username: 'admin' });
+    await expectAsync(result).toBeResolvedTo(true);
+  });
 
-    it('should return null username initially', () => {
-      expect(authService.username()).toBeNull();
-    });
+  it('redirects to /login when the session probe returns 401', async () => {
+    const result = run(authGuard);
+    httpMock.expectOne('/api/auth/me/').flush({}, { status: 401, statusText: 'Unauthorized' });
+
+    const value = await result;
+    expect(value instanceof UrlTree).toBeTrue();
+    expect(TestBed.inject(Router).serializeUrl(value as UrlTree)).toBe('/login');
+  });
+
+  it('keeps you on login when there is no session', async () => {
+    const result = run(publicGuard);
+    httpMock.expectOne('/api/auth/me/').flush({}, { status: 401, statusText: 'Unauthorized' });
+    await expectAsync(result).toBeResolvedTo(true);
+  });
+
+  it('redirects away from login when a session exists', async () => {
+    const result = run(publicGuard);
+    httpMock.expectOne('/api/auth/me/').flush({ username: 'admin' });
+
+    const value = await result;
+    expect(value instanceof UrlTree).toBeTrue();
+    expect(TestBed.inject(Router).serializeUrl(value as UrlTree)).toBe('/');
   });
 });

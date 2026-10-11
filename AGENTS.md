@@ -32,7 +32,7 @@ cd backend && python -m pytest tests/ -v
 cd frontend && npx ng test --watch=false --browsers=ChromeHeadless
 ```
 
-94 tests total: 48 backend + 46 frontend.
+124 tests total: 59 backend + 65 frontend.
 
 ## Key Files
 

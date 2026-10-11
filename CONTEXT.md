@@ -21,6 +21,7 @@ IP camera video surveillance system with continuous recording and animated GIF p
 | **RecorderService** | Singleton that manages ffmpeg subprocesses in the Celery worker process. Tracks active processes in an in-memory dict. |
 | **Recording Status** | Redis cache key `recording:{camera_id}` indicating whether a camera is currently recording. Shared between API and Celery worker containers via Redis. Published via Redis pub/sub for SSE. |
 | **SimpleUser** | A lightweight Python object (not a Django model) representing the authenticated user. Always `id=1`, username from env vars. |
+| **Session** | The server-side fact that a valid, non-expired JWT exists in the `access_token` cookie. Only the server can verify it — the client cannot read the HttpOnly cookie. This is the sole source of truth for authentication. _Avoid_: login, token, "authenticated" (when meaning the client's belief). |
 | **Fragment Duration** | Length of each video fragment in seconds. Default: 1800 (30 minutes). Configured in `base.py`. |
 | **NAS** | Network Attached Storage. Production recordings are stored at `/mnt/nas-pictures/monitocam` on the host, mounted into containers at `/var/lib/monitocam/recordings`. |
 | **SSE** | Server-Sent Events. Unidirectional real-time status updates from server to frontend via `EventSource`. Uses Redis pub/sub to broadcast recording status changes. |
@@ -113,7 +114,7 @@ IP camera video surveillance system with continuous recording and animated GIF p
 | `/cameras/{id}/stop/` | POST | Yes | Stop recording (Celery task) |
 | `/cameras/{id}/status/` | GET | Yes | Get recording status for one camera |
 | `/cameras/statuses/` | GET | Yes | Get recording status for all cameras |
-| `/cameras/events/` | GET | No | SSE stream for real-time status updates |
+| `/cameras/events/` | GET | Yes | SSE stream for real-time status updates |
 | `/recordings/` | GET | Yes | List recordings (`?camera_id=` filter) |
 | `/recordings/{id}/` | DELETE | Yes | Delete recording + files from disk |
 | `/recordings/{id}/stream/` | GET | Yes | Stream MP4 |
@@ -137,7 +138,7 @@ IP camera video surveillance system with continuous recording and animated GIF p
 | Service | Purpose |
 |---------|---------|
 | `ApiService` | All HTTP calls, base URL `/api`, trailing slashes on all URLs |
-| `AuthService` | Signals-based auth state, login/logout/checkAuth |
+| `AuthService` | Server-verified **Session** state (`ensureSession()`, memoized per load), `username` (display), login/logout, `handleSessionExpired()` |
 | `SseService` | EventSource SSE with auto-reconnect, `statuses` signal for real-time camera status |
 
 ## Environment Variables
@@ -225,9 +226,9 @@ monitocam/
     │       │   ├── sse.service.ts      # EventSource SSE with auto-reconnect, statuses signal
     │       │   └── sse.service.spec.ts # 7 tests: connect, disconnect, message handling, listeners
     │       ├── core/
-    │       │   ├── auth.service.ts     # Signals-based auth state
-    │       │   ├── auth.guard.ts       # authGuard, publicGuard
-    │       │   └── auth.interceptor.ts # withCredentials: true
+    │       │   ├── auth.service.ts     # Session state (ensureSession/handleSessionExpired)
+    │       │   ├── auth.guard.ts       # authGuard, publicGuard (async — await ensureSession)
+    │       │   └── auth.interceptor.ts # withCredentials + 401 → handleSessionExpired (skips /auth/me/, /auth/login/)
     │       └── features/
     │           ├── auth/login.component.ts
     │           ├── cameras/
@@ -293,7 +294,7 @@ cd frontend && npx ng test --watch=false --browsers=ChromeHeadless
 docker compose exec api python -m pytest tests/ -v
 ```
 
-94 tests total: 48 backend + 46 frontend.
+124 tests total: 59 backend + 65 frontend.
 
 ## Git Conventions
 
