@@ -23,7 +23,7 @@ IP camera video surveillance system with continuous recording and animated GIF p
 | **SimpleUser** | A lightweight Python object (not a Django model) representing the authenticated user. Always `id=1`, username from env vars. |
 | **Session** | The server-side fact that a valid, non-expired JWT exists in the `access_token` cookie. Only the server can verify it — the client cannot read the HttpOnly cookie. This is the sole source of truth for authentication. _Avoid_: login, token, "authenticated" (when meaning the client's belief). |
 | **Fragment Duration** | Length of each video fragment in seconds. Default: 1800 (30 minutes). Configured in `base.py`. |
-| **NAS** | Network Attached Storage. Production recordings are stored at `/mnt/nas-pictures/monitocam` on the host, mounted into containers at `/var/lib/monitocam/recordings`. |
+| **NAS** | Network Attached Storage. Production recordings are stored at `/mnt/usb/monitocam` on the host, mounted into containers at `/var/lib/monitocam/recordings`. |
 | **SSE** | Server-Sent Events. Unidirectional real-time status updates from server to frontend via `EventSource`. Uses Redis pub/sub to broadcast recording status changes. |
 | **Continuous Recording** | After a fragment finishes, the next one starts automatically via Celery task chaining. No gap between fragments. |
 
