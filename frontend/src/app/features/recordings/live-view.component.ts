@@ -17,7 +17,7 @@ export type LiveViewState = 'loading' | 'live' | 'error';
         <div class="live-scanlines"></div>
         <div class="live-hud">
           <span class="live-badge">LIVE</span>
-          <span class="live-info">Sótano · {{ now() }}</span>
+          <span class="live-info">Live · {{ now() }}</span>
         </div>
         <img [src]="snapshotUrl()" (error)="onError()" (load)="onLoad()" alt="Live snapshot" />
       </div>
@@ -158,7 +158,7 @@ export class LiveViewComponent implements OnInit, OnDestroy {
   }
 
   private updateTime(): void {
-    this.now.set(new Date().toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', second: '2-digit' }));
+    this.now.set(new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' }));
   }
 
   private refreshSnapshot(): void {

@@ -51,13 +51,13 @@ describe('LoginComponent', () => {
   it('should show login button text', () => {
     fixture.detectChanges();
     const compiled = fixture.nativeElement as HTMLElement;
-    expect(compiled.querySelector('button')?.textContent?.trim()).toBe('Entrar');
+    expect(compiled.querySelector('button')?.textContent?.trim()).toBe('Log in');
   });
-
+ 
   it('should show loading text when loading', () => {
     component.loading.set(true);
     fixture.detectChanges();
     const compiled = fixture.nativeElement as HTMLElement;
-    expect(compiled.querySelector('button')?.textContent?.trim()).toBe('Entrando...');
+    expect(compiled.querySelector('button')?.textContent?.trim()).toBe('Logging in...');
   });
 });

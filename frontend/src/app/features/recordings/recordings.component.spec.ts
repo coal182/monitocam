@@ -94,7 +94,7 @@ describe('RecordingsComponent', () => {
 
   it('should format timestamp with ISO date', () => {
     const result = component.formatTimestamp('2024-01-15T14:30:00+01:00');
-    expect(result).toContain('15/01/2024');
+    expect(result).toContain('01/15/2024');
   });
 
   it('should format timestamp empty string', () => {
@@ -113,7 +113,7 @@ describe('RecordingsComponent', () => {
       fixture.detectChanges();
       const compiled = fixture.nativeElement as HTMLElement;
       expect(compiled.querySelector('.pagination')).toBeTruthy();
-      expect(compiled.querySelector('.page-info')?.textContent).toContain('Página 1 de 1');
+      expect(compiled.querySelector('.page-info')?.textContent).toContain('Page 1 of 1');
       done();
     });
   });

@@ -91,7 +91,7 @@ export class RecordingsComponent implements OnInit {
 
   deleteGif(gif: GifItem, event: Event): void {
     event.stopPropagation();
-    if (!confirm(`Eliminar grabación ${gif.filename}?`)) return;
+    if (!confirm(`Delete recording ${gif.filename}?`)) return;
     this.api.deleteRecording(gif.id)
       .then(() => this.loadGifs());
   }
@@ -111,17 +111,17 @@ export class RecordingsComponent implements OnInit {
   }
 
   cleanupOldRecordings(): void {
-    const days = prompt('Eliminar grabaciones de hace cuántos días?', '7');
+    const days = prompt('How many days back to delete recordings?', '7');
     if (!days) return;
     const daysNum = parseInt(days, 10);
     if (isNaN(daysNum) || daysNum < 0) {
-      alert('Por favor ingresa un número válido de días');
+      alert('Please enter a valid number of days');
       return;
     }
-    if (!confirm(`Eliminar todas las grabaciones de hace más de ${daysNum} días?`)) return;
+    if (!confirm(`Delete all recordings older than ${daysNum} days?`)) return;
     this.api.cleanupOldRecordings(daysNum)
       .then(() => this.loadGifs())
-      .catch(err => alert('Error al limpiar grabaciones: ' + err.message));
+      .catch(err => alert('Error cleaning up recordings: ' + err.message));
   }
 
   formatSize(bytes: number): string {
@@ -138,7 +138,7 @@ export class RecordingsComponent implements OnInit {
   formatTimestamp(ts: string): string {
     if (!ts) return '';
     const date = new Date(ts);
-    return date.toLocaleString('es-ES', {
+    return date.toLocaleString('en-US', {
       day: '2-digit',
       month: '2-digit',
       year: 'numeric',

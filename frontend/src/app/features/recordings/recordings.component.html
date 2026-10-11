@@ -48,7 +48,7 @@
           <button (click)="closeVideo()" class="close-btn">X</button>
         </div>
         <video [src]="getDownloadUrl(selectedGif()!.id)" controls autoplay>
-          Tu navegador no soporta video.
+          Your browser does not support video.
         </video>
         <div class="modal-footer">
           <a [href]="getDownloadUrl(selectedGif()!.id)" class="btn-download" download>
@@ -74,11 +74,11 @@
   @if (gifs().length > 0) {
     <div class="pagination">
       <button class="btn-pagination" (click)="prevPage()" [disabled]="currentPage() <= 1">
-        « Anterior
+        « Previous
       </button>
-      <span class="page-info">Página {{ currentPage() }} de {{ totalPages() }}</span>
+      <span class="page-info">Page {{ currentPage() }} of {{ totalPages() }}</span>
       <button class="btn-pagination" (click)="nextPage()" [disabled]="currentPage() >= totalPages()">
-        Siguiente »
+        Next »
       </button>
     </div>
     <div class="gifs-grid">
@@ -96,7 +96,7 @@
             <p class="timestamp">{{ formatTimestamp(gif.timestamp) }}</p>
             <div class="gif-footer">
               <p class="size">{{ formatSize(gif.size) }}</p>
-              <button class="btn-delete" (click)="deleteGif(gif, $event)" title="Eliminar">X</button>
+              <button class="btn-delete" (click)="deleteGif(gif, $event)" title="Delete">X</button>
             </div>
           </div>
         </div>

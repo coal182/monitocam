@@ -50,7 +50,7 @@ describe('CamerasComponent', () => {
 
     const compiled = fixture.nativeElement as HTMLElement;
     expect(compiled.querySelector('.header button')).toBeTruthy();
-    expect(compiled.querySelector('.header button')?.textContent).toContain('Anadir Camara');
+    expect(compiled.querySelector('.header button')?.textContent).toContain('Add Camera');
   });
 
   it('should load cameras on init', async () => {
